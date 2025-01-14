@@ -9,7 +9,7 @@ The following packages are required:
   spherical_geometry - for building sectoral footprints (not required before that)  
   geopandas - for building sectoral footprints against specific countries
 
-These two are recommended, but not required (the program will work normally even if these are not installed): 
+The following two are recommended, but not required (the program will work normally even if these are not installed): 
 
   tktooltips  
   playsound
