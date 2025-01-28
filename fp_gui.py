@@ -896,7 +896,7 @@ def gui_balmis_trajectory() :
     print("Missile trajectory saved to " + file_mt)
     
 
-def gui_trajcharts(r_data) :
+def gui_trajcharts(r_data, is_missile) :
     #m_key = rtype_var.get()
     #missile_data = rd.missile(m_key, rd_fname)
     #print(missile_data)
@@ -904,8 +904,12 @@ def gui_trajcharts(r_data) :
     ind_flight_dataprint = True
     #print(r_data)
     trj = bm.balmisflight(r_data, trajectory_data, ind_flight_dataprint)
-    #m_range = trj[len(trj) - 1, 2] * R_e
-    #print("Missile range = {:.0f} km".format(m_range/1000))
+    m_range = trj[len(trj) - 1, 2] * R_e
+    if is_missile :
+        print("Missile range = {:.0f} km".format(m_range/1000))
+    else :
+        print("Interceptor range = {:.0f} km".format(m_range/1000))
+        
 
     global trajchart_win
 
@@ -1109,14 +1113,14 @@ def gui_trajcharts(r_data) :
 def gui_balmis_trajcharts() :
     m_key = mtype_var.get()
     missile_data = rd.missile(m_key, rd_fname)
-    gui_trajcharts(missile_data)
+    gui_trajcharts(missile_data, True) #is_missile == True
 
 def gui_interceptor_trajcharts() :
     i_key = itype_var.get()
     interceptor_data = rd.interceptor(i_key, rd_fname)
     #print(i_key, interc_data)
     #print("int_tc", interceptor_data)
-    gui_trajcharts(interceptor_data)
+    gui_trajcharts(interceptor_data, False) #is_missile == False
 
 def gui_interceptor_flight() :
     i_key = itype_var.get()
@@ -4610,7 +4614,7 @@ def rocket_editor(is_missile=True) :
                 
         def trj_charts() :
             r_rocket_data = get_window_rdata()
-            gui_trajcharts(r_rocket_data)
+            gui_trajcharts(r_rocket_data, is_missile)
                 
         def maxrange() :
             r_rocket_data = get_window_rdata()
