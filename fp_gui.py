@@ -31,7 +31,7 @@ import balmis as bm
 #import tables_v2b as tb
 import short_search as ss
 import footprintv2 as fp
-import chart3d_window as c3
+#import chart3d_window as c3
 from angle import calculate_angles
 
 import intersection as isec
@@ -45,7 +45,7 @@ import urllib.parse
 import webbrowser
 import traceback
 
-from c_classes import CEntry, TextRedirector, AutoScrollbar
+from c_classes import CEntry, TextRedirector, AutoScrollbar, CustomNavigationToolbar
 
 macos = (sys.platform == 'darwin')
 if macos :
@@ -950,7 +950,7 @@ def gui_trajcharts(r_data, is_missile) :
             canvas.get_tk_widget().pack()
         
             # creating the Matplotlib toolbar
-            toolbar = c3.CustomNavigationToolbar(canvas, trajchart_win, disable_coordinates=False)
+            toolbar = CustomNavigationToolbar(canvas, trajchart_win, disable_coordinates=False)
             toolbar.update()
         
             # placing the toolbar on the Tkinter chart_win
@@ -1648,14 +1648,19 @@ def gui_mk_poly_data(ftprint_arr, mis_range, data_fname, mode2=False) :
             global ent_loc_lon
             global ent_loc_azm
             global ent_loc_sec
+            global angles_window
                         
             loclat = []
             loclon = []
             locazm = []
             locsec = []
             for i_f in range(num_loc) :
-                loclat.append(float(ent_loc_lat[i_f].get()))
-                loclon.append(float(ent_loc_lon[i_f].get()))
+                if ent_loc_lat[i_f].get() and ent_loc_lon[i_f].get() :
+                    loclat.append(float(ent_loc_lat[i_f].get()))
+                    loclon.append(float(ent_loc_lon[i_f].get()))
+                else :
+                    print("Please enter ILP coordinates")
+                    return
 
             angles_window = Toplevel()
             angles_window.title("Country Angles")
@@ -1832,6 +1837,10 @@ https://geojson.io to show footprints on the globe. The saved file can be opened
         btn_intersave.grid(row=0, column=5, sticky='ew')
 
         def poly_show_root_window() :
+            if 'angles_window' in globals() :
+                angles_window.destroy()
+            if hasattr(isec, 'win3d') and isec.win3d.winfo_exists():
+                isec.win3d.destroy()
             geofootprint_win.destroy()
             root.deiconify()
     
