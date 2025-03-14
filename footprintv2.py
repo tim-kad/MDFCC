@@ -20,7 +20,7 @@ shift_min = 1000
 global dist_to_trj_min
 
 
-def fp_point(queue, i_i, f_ang, t_dist, s_func, t_trj, t_itable, h_min, t_lnc, op_range, det_range, t_delay, h_discr, dist_max, t_acc) :
+def fp_point(queue, i_i, f_ang, t_dist, s_func, t_trj, t_itable, h_min, maxia, t_lnc, op_range, det_range, t_delay, h_discr, dist_max, t_acc) :
     """ for multiprocessing version of footprint, >>>not usable because of edits to non-multiproc version<<< """
     f_dist = t_dist
     #print("Footprint angle={:5.1f}".format(f_ang))
@@ -28,7 +28,7 @@ def fp_point(queue, i_i, f_ang, t_dist, s_func, t_trj, t_itable, h_min, t_lnc, o
     f_dist0 = 0
     f_ang_r = radians(f_ang)
 #            f_ok = True # since ilp_ok == True
-    f_ok = s_func(t_trj, t_itable, h_min, t_lnc, f_ang_r, f_dist, op_range, det_range, t_delay, h_discr)
+    f_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, f_ang_r, f_dist, op_range, det_range, t_delay, h_discr)
     while f_ok :                
         f_dist0 = f_dist
         if f_dist >= dist_max :
@@ -36,13 +36,13 @@ def fp_point(queue, i_i, f_ang, t_dist, s_func, t_trj, t_itable, h_min, t_lnc, o
             break
         f_dist *= 2
         f_dist = min(f_dist, dist_max)
-        f_ok = s_func(t_trj, t_itable, h_min, t_lnc, f_ang_r, f_dist, op_range, det_range, t_delay, h_discr)
+        f_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, f_ang_r, f_dist, op_range, det_range, t_delay, h_discr)
     do_search = not f_ok
     f_a = f_dist0
     f_b = f_dist
     while do_search :
         f_x = f_a + (f_b - f_a) / 2
-        f_xy = s_func(t_trj, t_itable, h_min, t_lnc, f_ang_r, f_x, op_range, det_range, t_delay, h_discr)
+        f_xy = s_func(t_trj, t_itable, h_min, maxia, t_lnc, f_ang_r, f_x, op_range, det_range, t_delay, h_discr)
         if f_xy :
             f_a = f_x
             f_y_keep = f_xy
@@ -85,7 +85,8 @@ def fp_point(queue, i_i, f_ang, t_dist, s_func, t_trj, t_itable, h_min, t_lnc, o
 def footprint_calc_v2_m(s_func,
                       t_trj,
                       t_itable,
-                      h_min,
+                      h_min, 
+                      maxia,
                       t_lnc,
                       t_angle_step,
                       op_range,
@@ -155,7 +156,7 @@ def footprint_calc_v2_m(s_func,
 #        return False
     """ First, check if interceptor launch point is defendable """
     print("Interceptor launch point defense check...", end='')
-    ilp_ok = s_func(t_trj, t_itable, h_min, t_lnc, 0, 0, op_range, det_range, t_delay, h_discr)
+    ilp_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, 0, op_range, det_range, t_delay, h_discr)
     #ilp_ok = True
     
     if ilp_ok :
@@ -188,8 +189,8 @@ def footprint_calc_v2_m(s_func,
                         t_dist = dist_max
                     t_dist = dist_max # larger shape in case it's irregular
                 
-                #fp_point(queue, i_i, f_ang, t_dist, s_func, t_trj, t_itable, h_min, t_lnc, op_range, det_range, t_delay, h_discr, dist_max, t_acc)
-                p = Process(target=fp_point, args=(send_end, j, f_ang, t_dist, s_func, t_trj, t_itable, h_min, t_lnc, op_range, det_range, t_delay, h_discr, dist_max, t_acc))
+                #fp_point(queue, i_i, f_ang, t_dist, s_func, t_trj, t_itable, h_min, maxia, t_lnc, op_range, det_range, t_delay, h_discr, dist_max, t_acc)
+                p = Process(target=fp_point, args=(send_end, j, f_ang, t_dist, s_func, t_trj, t_itable, h_min, maxia, t_lnc, op_range, det_range, t_delay, h_discr, dist_max, t_acc))
                 processes.append(p)
                 pipe_list.append(recv_end)
                 p.start()
@@ -263,7 +264,8 @@ def footprint_calc_v2_m(s_func,
 def footprint_calc_v2(s_func,
                       t_trj,
                       t_itable,
-                      h_min,
+                      h_min, 
+                      maxia,
                       t_lnc,
                       t_angle_step,
                       op_range,
@@ -335,7 +337,7 @@ def footprint_calc_v2(s_func,
 #        return False
     """ First, check if interceptor launch point is defendable """
     print("Interceptor launch point defense check...", end='')
-    ilp_ok = s_func(t_trj, t_itable, h_min, t_lnc, 0, 0, op_range, det_range, t_delay, h_discr)
+    ilp_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, 0, op_range, det_range, t_delay, h_discr)
     #ilp_ok = True
 
     stfp = time.process_time()
@@ -367,7 +369,7 @@ def footprint_calc_v2(s_func,
             f_dist0 = 0
             f_ang_r = radians(f_ang)
 #            f_ok = True # since ilp_ok == True
-            f_ok = s_func(t_trj, t_itable, h_min, t_lnc, f_ang_r, f_dist, op_range, det_range, t_delay, h_discr)
+            f_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, f_ang_r, f_dist, op_range, det_range, t_delay, h_discr)
             while f_ok :                
                 f_dist0 = f_dist
                 if f_dist >= dist_max :
@@ -375,13 +377,13 @@ def footprint_calc_v2(s_func,
                     break
                 f_dist *= 2
                 f_dist = min(f_dist, dist_max)
-                f_ok = s_func(t_trj, t_itable, h_min, t_lnc, f_ang_r, f_dist, op_range, det_range, t_delay, h_discr)
+                f_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, f_ang_r, f_dist, op_range, det_range, t_delay, h_discr)
             do_search = not f_ok
             f_a = f_dist0
             f_b = f_dist
             while do_search :
                 f_x = f_a + (f_b - f_a) / 2
-                f_xy = s_func(t_trj, t_itable, h_min, t_lnc, f_ang_r, f_x, op_range, det_range, t_delay, h_discr)
+                f_xy = s_func(t_trj, t_itable, h_min, maxia, t_lnc, f_ang_r, f_x, op_range, det_range, t_delay, h_discr)
                 if f_xy :
                     f_a = f_x
                     f_y_keep = f_xy

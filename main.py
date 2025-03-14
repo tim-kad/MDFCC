@@ -272,8 +272,7 @@ def run_interception_table(i_type, rd_fname='', psi_step=0.25, beta_step=0.1, ke
                             "a_nz",
                             "c_bal",
                             "traj_type",
-                            "vert_launch_height",
-                            "mpia"#,                             "op_range"
+                            "vert_launch_height"#,                            "mpia"#,                             "op_range"
                             ) :
                     if key in interceptor_data_r : # older data may not contain a later added parameter
                         if interceptor_data_r[key] != interceptor_data[key] :
@@ -295,7 +294,8 @@ def run_interception_table(i_type, rd_fname='', psi_step=0.25, beta_step=0.1, ke
                         if R_e != R_e0 : print("R_N = {:.3f}".format(R_e_r/R_e0))
                         r_no_atm = config_data_r[2]
                         if r_no_atm == fcc_constants.no_atmosphere :
-                            print("no_atmosphere={}".format(r_no_atm))
+                            pass
+                            #print("no_atmosphere={}".format(r_no_atm))
                         else :
                             interc_data_good = False
                             print("Parameter \'no_atmosphere\' is not the same current: {} vs read: {}".format(fcc_constants.no_atmosphere, r_no_atm))
@@ -431,8 +431,7 @@ def load_int_table(t_itype, psi_step=0.25, beta_step=0.1, f_name='', t_tstamp=''
                                 "a_nz",
                                 "c_bal",
                                 "vert_launch_height",
-                                "traj_type",
-                                "mpia" #,                                "op_range"
+                                "traj_type"#,                                "mpia" #,                                "op_range"
                                 ) :
                         if key in interceptor_data_r : # older data may not contain a later added parameter
                             if interceptor_data_r[key] != interceptor_data[key] :
@@ -455,7 +454,8 @@ def load_int_table(t_itype, psi_step=0.25, beta_step=0.1, f_name='', t_tstamp=''
                             if R_e != R_e0 : print("R_N = {:.3f}".format(R_e_r/R_e0))
                             r_no_atm = config_data_r[3]
                             if r_no_atm == fcc_constants.no_atmosphere :
-                                print("no_atmosphere={}".format(r_no_atm))
+                                pass
+                                #print("no_atmosphere={}".format(r_no_atm))
                             else :
                                 interc_data_good = False
                                 print("Parameter \'no_atmosphere\' is not the same, current: {} vs read: {}".format(fcc_constants.no_atmosphere, r_no_atm))

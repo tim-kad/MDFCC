@@ -8,8 +8,61 @@ from fcc_constants import rd_fname
 """ but may not work correctly since it's a remnant from early stage of development """
 missile_data_list = [
     {
-        "m_key" : 9, # David Wright
-        "type" : "m9 \"Notional IRBM\"",
+        "m_key" : 15, # David Wright
+        "type" : "m15 \"SM-3 Block IIA model with 4.5 km/s burnout speed\"", # Schiller model
+        "cd_type" : "ls", # large solid-fuel
+        "m_st" : [150, 900 * 0.16, 270 * 0.17], # stage mass, kg
+        "m_fu" : [450, 900 * 0.84, 270 * 0.83], # fuel mass, kg
+        "v_ex" : [239 * 9.8, 240 * 9.8, 245 * 9.8], # exhaust velocity, m/s
+        "t_bu" : [6, 60, 60],  # burn time, s
+        "t_delay" : [0, 0], # stage delay, s
+        "a_mid" : [.223, .223, .223], # stage cross area, m2
+        #"cd_0" : [0.25, 0.25, 0.25], # stage drag coeff -- not used
+        "m_shroud" : 20,
+        "t_shroud" : 100,
+        "m_pl" : 50.0,
+        #"m_wh" : 50.0,
+        "a_nz" : .2,
+        #"a_pl" : 0.031, # payload cross area, m2
+        #"cd_pl" : 0.25, # payload drug coeff
+        "c_bal" : 500 * 4.88, # in kg/m2
+        #"psi" : 0, # angle velocity and vertical
+        "vert_launch_height" : 200, # gravity angle starts at altitude, m
+        "grav_turn_angle" : 27.6, # gravity turn angle, grad -- to be used for range optimisation as a ballistic missile
+        "range" : 10000.0,
+        "traj_type" : "bal_mis", # trajectory type: int_exo = exoatm interceptor
+        "note" : "max 3375 km @ 33.513 grad 6540 m"
+        # max 3375 km @ 33.513 grad 6540 m
+    },
+    {
+        "m_key" : 14, # David Wright
+        "type" : "m14 \"Minotaur IV Lite (3-st)\"", # Schiller model
+        "cd_type" : "ls", # large solid-fuel
+        "m_st" : [3600, 3200, 640], # stage mass, kg
+        "m_fu" : [45400, 24500, 7080], # fuel mass, kg # 4.3% unburned
+        "v_ex" : [229 * 9.8, 308 * 9.8, 300 * 9.8], # exhaust velocity, m/s
+        "t_bu" : [56.5, 61, 72],  # burn time, s
+        "t_delay" : [1, 1], # stage delay, s
+        "a_mid" : [pi * 2.3 * 2.3 / 4, pi * 2.3 * 2.3 / 4, pi * 2.3 * 2.3 / 4], # stage cross area, m2 #max diam = 2.3 m
+        "cd_0" : [0.25, 0.25], # stage drag coeff  -- leftover
+        "m_shroud" : 450,
+        "t_shroud" : 76,
+        "m_pl" : 1800.0,
+        "m_wh" : 1800.0,
+        "a_nz" : 1.8,
+        "a_pl" : 0.185, # payload cross area, m2  -- leftover
+        "cd_pl" : 0.25, # payload drug coeff  -- leftover
+        "c_bal" : 2500 * 4.88, # in kg/m2
+        "grav_turn_angle" : 25.27, # $$$ gravity turn angle, grad
+        "vert_launch_height" : 530.0, # gravity angle starts at altitude, m
+        "range" : 41000.0, 
+        "traj_type" : "bal_mis", # trajectory type: bal_mis - ballistic missile, gravity turn
+        "note" : "notes on the rockets\nmax 41010 km  @ 59.70 grad 8470 m"
+        # max 41010 km  @ 59.70 grad 8470 m
+    },
+    {
+        "m_key" : 13, # David Wright
+        "type" : "m13 \"3500 km missile based on Minotaur (2-st)\"",
         "cd_type" : "ls", # large solid-fuel
         "m_st" : [3000, 1000], # stage mass, kg
         "m_fu" : [25000, 5000], # fuel mass, kg
@@ -34,11 +87,37 @@ missile_data_list = [
         # max 3868 km  @ 18.33 grad 100 m
     },
     {
-        "m_key" : 8, #David Wright
-        "type" : "m8 \"Notional SRBM\"", # Schiller model
+        "m_key" : 12, # David Wright
+        "type" : "m12 \"2000 km based on Scud-ER\"", # Schiller model
         "cd_type" : "v2", # large solid-fuel
-        "m_st" : [1330], # stage mass, kg
-        "m_fu" : [7400], # fuel mass, kg # 4.3% unburned
+        "m_st" : [700 + 350], # stage mass, kg
+        "m_fu" : [7730 - 350], # fuel mass, kg # 4.3% unburned
+        "v_ex" : [265 * 9.8], # exhaust velocity, m/s
+        "t_bu" : [90],  # burn time, s
+        "t_delay" : [], # stage delay, s
+        "a_mid" : [pi / 4], # stage cross area, m2 #max diam =1 m
+        "cd_0" : [0.25], # stage drag coeff
+        "m_shroud" : 0,
+        "t_shroud" : 0,
+        "m_pl" : 500.0,
+        "m_wh" : 500.0,
+        "a_nz" : 0.135, # nozzle area, 0 = not used
+        "a_pl" : 0.185, # payload cross area, m2
+        "cd_pl" : 0.25, # payload drug coeff
+        "c_bal" : 1500 * 4.88, # in kg/m2
+        "grav_turn_angle" : 20, # $$$ gravity turn angle, grad
+        "vert_launch_height" : 800.0, # gravity angle starts at altitude, m
+        "range" : 1400.0,
+        "traj_type" : "bal_mis", # trajectory type: bal_mis - ballistic missile, gravity turn
+        "note" : ""
+        # max 1443 km  @ 9.42 grad 100 m -- before a_nz added
+    },
+    {
+        "m_key" : 11, # David Wrigh
+        "type" : "m11 \"Scud-ER\"", # Schiller model
+        "cd_type" : "v2", # large solid-fuel
+        "m_st" : [1000 + 330], # stage mass, kg
+        "m_fu" : [7730 - 330], # fuel mass, kg # 4.3% unburned
         "v_ex" : [230 * 9.8], # exhaust velocity, m/s
         "t_bu" : [127.8],  # burn time, s
         "t_delay" : [], # stage delay, s
@@ -60,8 +139,87 @@ missile_data_list = [
         # max 821 km  @ 3.03 grad 510 m
     },
     {
+        "m_key" : 10, # David Wright
+        "type" : "m10 \"Scud-B\"",
+        "cd_type" : "v2", # large solid-fuel
+        "m_st" : [1102], # stage mass, kg
+        "m_fu" : [3771], # fuel mass, kg
+        "v_ex" : [226 * 9.8], # exhaust velocity, m/s
+        "t_bu" : [62],  # burn time, s
+        "t_delay" : [], # stage delay, s
+        "a_mid" : [pi * .88 * .88 / 4], # stage cross area, m2 #max diam =.88 m
+        "cd_0" : [0.25], # stage drag coeff
+        "m_shroud" : 0,
+        "t_shroud" : 0,
+        "m_pl" : 987.0,
+        "m_wh" : 987.0,
+        "a_nz" : 0.1352, # nozzle area, 0 = not used
+        "a_pl" : 0.185, # payload cross area, m2
+        "cd_pl" : 0.25, # payload drug coeff
+        "c_bal" : 4000 * 4.88, # in kg/m2
+        "grav_turn_angle" : 11, # $$$ gravity turn angle, grad
+        "vert_launch_height" : 100.0, # gravity angle starts at altitude, m
+        "range" : 300.0,
+        "traj_type" : "bal_mis", # trajectory type: bal_mis - ballistic missile, gravity turn
+        "note" : ""
+        # max 334 km 10.38 grad 100 m
+    },
+    {
+        "m_key" : 9, # David Wright
+        "type" : "m9 \"GBSD\"", #GBSD model 4-21  (MMIII with increased Isp and fuel fractions)
+        "cd_type" : "ls", # large solid-fuel
+        "m_st" : [23230 * .11, 7270 * .14, 3710 * .11], # stage mass, kg | total 23230, 7270, 3710
+        "m_fu" : [23230 * .89, 7270 * .86, 3710 * .89], # fuel mass, kg | 3306 = 0.89 * 3710
+        "v_ex" : [267 * 9.8, 287 * 9.8, 285 * 9.8], # exhaust velocity, m/s
+        "t_bu" : [61, 66, 61],  # burn time, s
+        "t_delay" : [1, 1], # stage delay, s
+        "a_mid" : [2.27, 2.27, 1.37], # stage cross area, m2 | max diam 1.7m, 3d stage from m7
+        "cd_0" : [0.25, 0.25, 0.25], # stage drag coeff -- leftover
+        "m_shroud" : 150,
+        "t_shroud" : 76,
+        "m_pl" : 600.0, #600.0, #3 W78 + bus    Standard payload = 1,000 kg --> 9000 km
+        "m_wh" : 600.0,
+        "a_nz" : 0.68, # nozzle area, 0 = not used
+        "a_pl" : 1.37, # payload cross area, m2 -- leftover
+        "cd_pl" : 0.25, # payload drug coeff -- leftover
+        "c_bal" : 2500 * 4.88, # in kg/m2
+        "grav_turn_angle" : 20.72774386, # gravity turn angle, grad
+        "vert_launch_height" : 100.0, # gravity angle starts at altitude, m
+        "range" : 10000.0,
+        "traj_type" : "bal_mis", # trajectory type: bal_mis - ballistic missile, gravity turn
+        "note" : ""
+        # max 25259 km 20.73 grad 100 m mpl=600 kg
+        # max 8636 km 13.56 grad 100 m mpl=1000 kg
+    },
+    {
+        "m_key" : 8, # David Wright
+        "type" : "m8 \"Minuteman 3\"",
+        "cd_type" : "ls", # large solid-fuel
+        "m_st" : [2450, 1030, 404], # stage mass, kg | total 23230, 7270, 3710
+        "m_fu" : [20780, 6240, 3306], # fuel mass, kg | 3306 = 0.89 * 3710
+        "v_ex" : [267 * 9.8, 287 * 9.8, 285 * 9.8], # exhaust velocity, m/s
+        "t_bu" : [61, 66, 61],  # burn time, s
+        "t_delay" : [1, 1], # stage delay, s
+        "a_mid" : [2.27, 2.27, 1.37], # stage cross area, m2 | max diam 1.7m, 3d stage from m7
+        "cd_0" : [0.25, 0.25, 0.25], # stage drag coeff -- leftover
+        "m_shroud" : 150,
+        "t_shroud" : 76,
+        "m_pl" : 900.0, #DW one W78 + bus
+        "m_wh" : 900.0,
+        "a_nz" : .68, # nozzle area, 0 = not used
+        "a_pl" : 1.37, # payload cross area, m2 -- leftover
+        "cd_pl" : 0.25, # payload drug coeff -- leftover
+        "c_bal" : 2500 * 4.88, # in kg/m2
+        "grav_turn_angle" : 15.0, # gravity turn angle, grad
+        "vert_launch_height" : 100.0, # gravity angle starts at altitude, m
+        "range" : 10000.0,
+        "traj_type" : "bal_mis", # trajectory type: bal_mis - ballistic missile, gravity turn
+        "note" : ""
+        # max 9881 km 14.74 grad 100 m
+    },
+    {
         "m_key" : 7, # Altmann
-        "type" : "m7 \"Notional LRBM\"",
+        "type" : "m7",
         "cd_type" : "ls", # large solid-fuel
         "m_st" : [1480, 490, 250], # stage mass, kg
         "m_fu" : [21190, 7070, 3530], # fuel mass, kg
@@ -247,7 +405,7 @@ missile_data_list = [
 interceptor_data_list = [
     { # Interceptor Type 1 - endoatmospheric
         "i_key" : 11, # Altmann
-        "type" : "i11 \"Notional Endo-atmospheric\"",
+        "type" : "i11",
         "cd_type" : "ls", # large solid-fuel
         "m_st" : [0], # stage mass, kg
         "m_fu" : [640], # fuel mass, kg
@@ -327,7 +485,7 @@ interceptor_data_list = [
     },
     {
         "i_key" : 14, # David Wright
-        "type" : "i14 \"Notional Exo-atmospheric\"", 
+        "type" : "i14 \"SM-3 Block IIA model with 4.5 km/s burnout speed\"", # Schiller model
         "cd_type" : "ls", # large solid-fuel
         "m_st" : [150, 900 * 0.16, 270 * 0.17], # stage mass, kg
         "m_fu" : [450, 900 * 0.84, 270 * 0.83], # fuel mass, kg
@@ -429,6 +587,15 @@ drag_solid_tab = np.array([
     [6, .1010],
     ])
 
+drag_Alt_tab = np.array([
+    [0, 1],
+    [1, 1],
+    [1.2, 1.4],
+    [1.3, 1.4],
+    [2, 1.2],
+    [5, 1],
+    [5.5, 1]
+    ])
 
 """"altitude, m, temperature, K, density, kg/m3, pressure, N/m2 for altitudes from 80 to 100 km"""
 atmosphere100 = np.array([
@@ -515,6 +682,9 @@ def str2num(r_data) :
     if 'mpia' in r_data.keys() :
         if r_data['mpia'] == '' :
             r_data['mpia'] = 0
+    if 'maxia' in r_data.keys() :
+        if r_data['maxia'] == '' :
+            r_data['maxia'] = 0
     if 'op_range' in r_data.keys() :
         if r_data['op_range'] == '' :
             r_data['op_range'] = 0
@@ -753,6 +923,8 @@ def interceptor(i_type, rd_filename=rd_fname) : # one interceptor # reads any da
                 if i_data['i_key'] == i_type :
                     if 'mpia' not in i_data.keys() :
                         i_data['mpia'] = ''
+                    if 'maxia' not in i_data.keys() :
+                        i_data['maxia'] = ''
                     #i_data = {key:val if key in ('i_key', 'type', 'cd_type', 'traj_type', 'note', 't_delay') else eval(str(val), {'pi' : pi}) for key, val in i_data.items()}
                     #i_data = {key:list(val) if key in ("m_st", "m_fu", "v_ex", "t_bu", "t_delay", "a_mid") else val for key, val in i_data.items()} # list
                     i_data = str2num(i_data)
@@ -769,6 +941,8 @@ def interceptor(i_type, rd_filename=rd_fname) : # one interceptor # reads any da
         if i_data['i_key'] == i_type :
             if 'mpia' not in i_data.keys() :
                 i_data['mpia'] = 0
+            if 'maxia' not in i_data.keys() :
+                i_data['maxia'] = 0
             i_data = one2n(i_data)
             return i_data
     
@@ -809,6 +983,8 @@ def s_interceptor(i_type, rd_filename=rd_fname) : # one interceptor # reads any 
             i_data = {key:val if key == 'i_key' else str(val).translate({ord(x): None for x in ']['}) for key, val in i_data.items()}
             if 'mpia' not in i_data.keys() :
                 i_data['mpia'] = ''
+            if 'maxia' not in i_data.keys() :
+                i_data['maxia'] = ''
             return i_data
         
     return False
@@ -860,6 +1036,8 @@ def load_s_idata(rd_filename=rd_fname) : # all interceptors, string data
                 i_data[key] = str(val).translate({ord(x): None for x in ']['})
         if 'mpia' not in i_data.keys() : # minimum possible intercept altitude
             i_data['mpia'] = ''
+        if 'maxia' not in i_data.keys() : # minimum possible intercept altitude
+            i_data['maxia'] = ''
         if 'm_warhead' not in i_data.keys() :
             i_data['m_warhead'] = ''
         if 'op_range' not in i_data.keys() :
@@ -893,6 +1071,8 @@ def load_s_data(rd_filename=rd_fname) : # load all missiles and interceptors, st
                 i_data[key] = str(val).translate({ord(x): None for x in ']['})
         if 'mpia' not in i_data.keys() :
             i_data['mpia'] = ''
+        if 'maxia' not in i_data.keys() :
+            i_data['maxia'] = ''
 
     return mdata_list, idata_list
 

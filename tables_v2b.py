@@ -643,9 +643,9 @@ def mis_traj_sample(tar_trj, beta_step=set_beta_step) :
     beta_step : TYPE
         size of beta steps in degrees
 
-        s
+    Returns
     -------
-    sampled trajectory (time, rad, beta, x, y)
+    sampled trajectory (time, rad, beta, x, y) - x, y in start coords, not Earth center!
 
     """
 

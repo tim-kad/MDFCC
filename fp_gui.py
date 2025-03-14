@@ -79,6 +79,8 @@ def default_config() :
         'h_int_min_list' : "1000, 2000, 3000",
         'h_discr_list' : "0, 10, 20",
         't_delay_list' : "5, 10, 15",
+        'op_range_list' : "0, 100",
+        'maxia_list' : "0, 100",
 
         'fp_calc_mode' : False, # footprint calculation mode, False = mode1, True = mode2
         'acc' : 0.01,       # i.e. ~1% -- or 1000 m (built-in)
@@ -142,6 +144,8 @@ def set_config() :
     h_int_min_list_var.set(program_config['h_int_min_list'])
     h_discr_list_var.set(program_config['h_discr_list'])
     t_delay_list_var.set(program_config['t_delay_list'])
+    op_range_list_var.set(program_config['op_range_list'])
+    maxia_list_var.set(program_config['maxia_list'])
 
     fp_calc_mode_var.set(program_config['fp_calc_mode'])
     acc_var.set(program_config['acc'])
@@ -217,7 +221,8 @@ def check_constants() :
         if fcc_constants.no_atmosphere != c_no_atmosphere :
             print(">>>no_atmosphere = {}".format(fcc_constants.no_atmosphere), file=sys.stderr)
         else :
-            print("<<<no_atmosphere = {}".format(fcc_constants.no_atmosphere))
+            pass
+            #print("<<<no_atmosphere = {}".format(fcc_constants.no_atmosphere))
 
 
 
@@ -244,6 +249,8 @@ def save_program_config() :
         'h_int_min_list' : h_int_min_list_var.get(),
         'h_discr_list' : h_discr_list_var.get(),
         't_delay_list' : t_delay_list_var.get(),
+        'op_range_list' : op_range_list_var.get(),
+        'maxia_list' : maxia_list_var.get(),
         
         'fp_calc_mode' : fp_calc_mode_var.get(),
         'acc' : acc_var.get(),
@@ -437,7 +444,8 @@ def extra_param() :
                 if fcc_constants.no_atmosphere != c_no_atmosphere :
                     print(">>>no_atmosphere = {}".format(fcc_constants.no_atmosphere), file=sys.stderr)
                 else :
-                    print("<<<no_atmosphere = {}".format(fcc_constants.no_atmosphere))
+                    pass
+                    #print("<<<no_atmosphere = {}".format(fcc_constants.no_atmosphere))
             
             #print("b", fcc_constants.sat_delay, fcc_constants.no_atmosphere, fcc_constants.psi_step)
             
@@ -1521,8 +1529,9 @@ def gui_mk_poly_data(ftprint_arr, mis_range, data_fname, mode2=False) :
                                 featurelist.append(poly_f)
                                 
                 else : #no footprint
-                    print("No Footprint to Plot")
-                    return
+                    pass
+                    #print("No Footprint to Plot")
+                    #return
 
             fp_featcoll = geojson.FeatureCollection(featurelist)
             fp_featcoll_string = json.dumps(fp_featcoll, separators=(',', ':'))
@@ -1607,8 +1616,9 @@ def gui_mk_poly_data(ftprint_arr, mis_range, data_fname, mode2=False) :
                         featurelist.extend(ifeaturelist)
                                 
                 else : #no footprint
-                    print("No Footprint to Plot")
-                    return
+                    pass
+                    #print("No Footprint to Plot")
+                    #return
                 
             fp_featcoll = geojson.FeatureCollection(featurelist)
             fp_featcoll_string = json.dumps(fp_featcoll, separators=(',', ':'))
@@ -2080,6 +2090,9 @@ def min_detrange() :
     mpia *= 1000
     h_int_min = max(h_int_min, mpia)
 
+    maxia = interceptor_data['maxia']
+    maxia *= 1000
+
     op_range = interceptor_data['op_range']
     if op_range < 2000 :
         op_range *= 1000
@@ -2100,19 +2113,19 @@ def min_detrange() :
     dr_start = 1000000
     t_acc  = .01
     f_b = dr_start
-    ilp_ok = s_func(trj, int_table, h_int_min, t_int_lnc, 0, 0, op_range, f_b, t_delay, h_discr)
+    ilp_ok = s_func(trj, int_table, h_int_min, maxia, t_int_lnc, 0, 0, op_range, f_b, t_delay, h_discr)
     while not ilp_ok :
         if f_b == dr_max :
             print("Iinterceptor launch point undefendable with any detection range\n")
             return False
         f_b *= 2
         f_b = min(f_b, dr_max)
-        ilp_ok = s_func(trj, int_table, h_int_min, t_int_lnc, 0, 0, op_range, f_b, t_delay, h_discr)
+        ilp_ok = s_func(trj, int_table, h_int_min, maxia, t_int_lnc, 0, 0, op_range, f_b, t_delay, h_discr)
     
     f_a = 0
     while True :
         f_x = f_a + (f_b - f_a) / 2
-        f_xy = s_func(trj, int_table, h_int_min, t_int_lnc, 0, 0, op_range, f_x, t_delay, h_discr)
+        f_xy = s_func(trj, int_table, h_int_min, maxia, t_int_lnc, 0, 0, op_range, f_x, t_delay, h_discr)
         if f_xy :
             f_b = f_x
         else :
@@ -2205,6 +2218,9 @@ def gui_footprint() :
     mpia *= 1000
     h_int_min = max(h_int_min, mpia)
 
+    maxia = interceptor_data['maxia']
+    maxia *= 1000
+
     fp_st = time.time()
     
     op_range = interceptor_data['op_range']
@@ -2232,7 +2248,8 @@ def gui_footprint() :
         footprint_tab = fp.footprint_calc_v2(search_func, 
                                          trj,
                                          int_table,
-                                         h_int_min,
+                                         h_int_min, 
+                                         maxia,
                                          t_int_lnc,
                                          angle_step,
                                          op_range,
@@ -2255,7 +2272,8 @@ def gui_footprint() :
         footprint_tab2 = ss.footprint_mode2(search_func, 
                                          trj,
                                          int_table,
-                                         h_int_min,
+                                         h_int_min, 
+                                         maxia,
                                          t_int_lnc,
                                          angle_step_mode2, # global parameter
                                          op_range,
@@ -2285,15 +2303,15 @@ def gui_footprint() :
     if np.any(footprint_tab) :
         if not mode2 :
             if det_range :
-                header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
-                header_str = header_str.format(m_type, i_type, h_int_min/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type)
-                chart_info_str = "h_int_min={} km t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
-                chart_info_str = chart_info_str.format(h_int_min/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type)
+                header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
+                header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type)
+                chart_info_str = "min_ia={} maxia={} t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
+                chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type)
             else :
-                header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} angle_step={} sat_delay={} h_discr={} {}"
-                header_str = header_str.format(m_type, i_type, h_int_min/1000, t_int_lnc, angle_step, fcc_constants.sat_delay, h_discr/1000, search_type)
-                chart_info_str = "h_int_min={} km t_int_lnc={} angle_step={} sat_delay={} h_discr={} {}"
-                chart_info_str = chart_info_str.format(h_int_min/1000, t_int_lnc, angle_step, fcc_constants.sat_delay, h_discr/1000, search_type)
+                header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} angle_step={} sat_delay={} h_discr={} {}"
+                header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, t_int_lnc, angle_step, fcc_constants.sat_delay, h_discr/1000, search_type)
+                chart_info_str = "min_ia={} maxia={} t_int_lnc={} angle_step={} sat_delay={} h_discr={} {}"
+                chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, t_int_lnc, angle_step, fcc_constants.sat_delay, h_discr/1000, search_type)
             data_fname = footprint_path + "/footprint_m{}_i{}_{}{}.json".format(m_type, i_type, save_label, t_stamp)
             
             if op_range :
@@ -2309,15 +2327,15 @@ def gui_footprint() :
 
         else :
             if det_range :
-                header_str = "Mode2: omega, shift, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} num_steps2={} det_range={} km t_delay={} h_discr={} {}"
-                header_str = header_str.format(m_type, i_type, h_int_min/1000, t_int_lnc, num_steps_mode2, det_range/1000, t_delay, h_discr/1000, search_type)
-                chart_info_str = "h_int_min={} km t_int_lnc={} num_steps2={} det_range={} km t_delay={} h_discr={} {}"
-                chart_info_str = chart_info_str.format(h_int_min/1000, t_int_lnc, num_steps_mode2, det_range/1000, t_delay, h_discr/1000, search_type)
+                header_str = "Mode2: omega, shift, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} num_steps2={} det_range={} km t_delay={} h_discr={} {}"
+                header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, t_int_lnc, num_steps_mode2, det_range/1000, t_delay, h_discr/1000, search_type)
+                chart_info_str = "min_ia={} maxia={} t_int_lnc={} num_steps2={} det_range={} km t_delay={} h_discr={} {}"
+                chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, t_int_lnc, num_steps_mode2, det_range/1000, t_delay, h_discr/1000, search_type)
             else :
-                header_str = "Mode2: omega, shift, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} num_steps2={} sat_delay={} km h_discr={} {}"
-                header_str = header_str.format(m_type, i_type, h_int_min/1000, t_int_lnc, num_steps_mode2, fcc_constants.sat_delay, h_discr/1000, search_type)
-                chart_info_str = "h_int_min={} km t_int_lnc={} num_steps2={} sat_delay {} h_discr={} {}"
-                chart_info_str = chart_info_str.format(h_int_min/1000, t_int_lnc, num_steps_mode2, fcc_constants.sat_delay, h_discr/1000, search_type)
+                header_str = "Mode2: omega, shift, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} num_steps2={} sat_delay={} km h_discr={} {}"
+                header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, t_int_lnc, num_steps_mode2, fcc_constants.sat_delay, h_discr/1000, search_type)
+                chart_info_str = "min_ia={} maxia={} t_int_lnc={} num_steps2={} sat_delay {} h_discr={} {}"
+                chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, t_int_lnc, num_steps_mode2, fcc_constants.sat_delay, h_discr/1000, search_type)
             data_fname = footprint_path + "/footprint_mode2_m{}_i{}_{}{}.json".format(m_type, i_type, save_label, t_stamp)
             if op_range :
                 title_str = "Footprint Mode2: i_type={} op_range={:.0f} km m_type={} mrange={:.0f} km".format(i_type, op_range/1000, m_type, mrange/1000)
@@ -2417,6 +2435,9 @@ def gui_double_footprint() :
     mpia *= 1000
     h_int_min = max(h_int_min, mpia)
 
+    maxia = interceptor_data['maxia']
+    maxia *= 1000
+
     op_range = interceptor_data['op_range']
     if op_range < 2000 :
         op_range *= 1000
@@ -2438,20 +2459,20 @@ def gui_double_footprint() :
         search_func2 = ss.sls_search
 
         print("Footprint1 interception type: " + search_type1)
-        footprint_tab1 = fp.footprint_calc_v2(search_func1, trj, int_table, h_int_min, t_int_lnc, angle_step, op_range, det_range, t_delay, h_discr, acc, dist)
+        footprint_tab1 = fp.footprint_calc_v2(search_func1, trj, int_table, h_int_min, maxia, t_int_lnc, angle_step, op_range, det_range, t_delay, h_discr, acc, dist)
     
         if np.any(footprint_tab1) :
             fp_1 = True
             if det_range :
-                header_str1 = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
-                header_str1 = header_str1.format(m_type, i_type, h_int_min/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type1)
-                chart_info_str1 = "h_int_min={} km t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
-                chart_info_str1 = chart_info_str1.format(h_int_min/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type1)
+                header_str1 = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
+                header_str1 = header_str1.format(m_type, i_type, h_int_min/1000, maxia/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type1)
+                chart_info_str1 = "min_ia={} maxia={} t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
+                chart_info_str1 = chart_info_str1.format(h_int_min/1000, maxia/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type1)
             else :
-                header_str1 = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} angle_step={} sat_delay={} h_discr={} {}"
-                header_str1 = header_str1.format(m_type, i_type, h_int_min/1000, t_int_lnc, angle_step, fcc_constants.sat_delay, h_discr/1000, search_type1)
-                chart_info_str1 = "h_int_min={} km t_int_lnc={} angle_step={} sat_delay={} h_discr={} {}"
-                chart_info_str1 = chart_info_str1.format(h_int_min/1000, t_int_lnc, angle_step, fcc_constants.sat_delay, h_discr/1000, search_type1)
+                header_str1 = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} angle_step={} sat_delay={} h_discr={} {}"
+                header_str1 = header_str1.format(m_type, i_type, h_int_min/1000, maxia/1000, t_int_lnc, angle_step, fcc_constants.sat_delay, h_discr/1000, search_type1)
+                chart_info_str1 = "min_ia={} maxia={} t_int_lnc={} angle_step={} sat_delay={} h_discr={} {}"
+                chart_info_str1 = chart_info_str1.format(h_int_min/1000, maxia/1000, t_int_lnc, angle_step, fcc_constants.sat_delay, h_discr/1000, search_type1)
 
             data_fname1 = footprint_path + "/double_footprint_m{}_i{}_{}{}.json".format(m_type, i_type, save_label1, t_stamp)
             
@@ -2467,20 +2488,20 @@ def gui_double_footprint() :
             print("No Footprint for " + search_type1 + " type of interception...")
     
         print("Footprint2 interception type: " + search_type2)
-        footprint_tab2 = fp.footprint_calc_v2(search_func2, trj, int_table, h_int_min, t_int_lnc, angle_step, op_range, det_range, t_delay, h_discr, acc, dist)
+        footprint_tab2 = fp.footprint_calc_v2(search_func2, trj, int_table, h_int_min, maxia, t_int_lnc, angle_step, op_range, det_range, t_delay, h_discr, acc, dist)
     
         if np.any(footprint_tab2) :
             fp_2 = True
             if det_range :
-                header_str2 = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
-                header_str2 = header_str2.format(m_type, i_type, h_int_min/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type2)
-                chart_info_str2 = "h_int_min={} km t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
-                chart_info_str2 = chart_info_str2.format(h_int_min/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type2)
+                header_str2 = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
+                header_str2 = header_str2.format(m_type, i_type, h_int_min/1000, maxia/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type2)
+                chart_info_str2 = "min_ia={} maxia={} t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
+                chart_info_str2 = chart_info_str2.format(h_int_min/1000, maxia/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type2)
             else :
-                header_str2 = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} angle_step={} sat_delay={} h_discr={} {}"
-                header_str2 = header_str2.format(m_type, i_type, h_int_min/1000, t_int_lnc, angle_step, fcc_constants.sat_delay, h_discr/1000, search_type2)
-                chart_info_str2 = "h_int_min={} km t_int_lnc={} angle_step={} sat_delay={} h_discr={} {}"
-                chart_info_str2 = chart_info_str2.format(h_int_min/1000, t_int_lnc, angle_step, fcc_constants.sat_delay, h_discr/1000, search_type2)
+                header_str2 = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} angle_step={} sat_delay={} h_discr={} {}"
+                header_str2 = header_str2.format(m_type, i_type, h_int_min/1000, maxia/1000, t_int_lnc, angle_step, fcc_constants.sat_delay, h_discr/1000, search_type2)
+                chart_info_str2 = "min_ia={} maxia={} t_int_lnc={} angle_step={} sat_delay={} h_discr={} {}"
+                chart_info_str2 = chart_info_str2.format(h_int_min/1000, maxia/1000, t_int_lnc, angle_step, fcc_constants.sat_delay, h_discr/1000, search_type2)
 
             data_fname2 = footprint_path + "/double_footprint_m{}_i{}_{}{}.json".format(m_type, i_type, save_label2, t_stamp)
             
@@ -2508,11 +2529,11 @@ def gui_double_footprint() :
     
             header_str = header_str1 + ', ' + search_type2
             if det_range :
-                chart_info_str = "h_int_min={} km t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={}"
-                chart_info_str = chart_info_str.format(h_int_min/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000)
+                chart_info_str = "min_ia={} maxia={} t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={}"
+                chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000)
             else :
-                chart_info_str = "h_int_min={} km t_int_lnc={} angle_step={} sat_delay={} h_discr={}"
-                chart_info_str = chart_info_str.format(h_int_min/1000, t_int_lnc, angle_step, fcc_constants.sat_delay, h_discr/1000)
+                chart_info_str = "min_ia={} maxia={} t_int_lnc={} angle_step={} sat_delay={} h_discr={}"
+                chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, t_int_lnc, angle_step, fcc_constants.sat_delay, h_discr/1000)
     
             label_arr = [search_type1, search_type2]
             footprint_arr = [footprint_tab1, footprint_tab2]
@@ -2528,21 +2549,21 @@ def gui_double_footprint() :
         search_func2 = ss.sls_search2
 
         print("Footprint1 mode2 interception type: " + search_type1)
-        footprint_tab1_2 = ss.footprint_mode2(search_func1, trj, int_table, h_int_min, t_int_lnc, angle_step_mode2, op_range, det_range, t_delay, h_discr, acc, num_steps_mode2)
+        footprint_tab1_2 = ss.footprint_mode2(search_func1, trj, int_table, h_int_min, maxia, t_int_lnc, angle_step_mode2, op_range, det_range, t_delay, h_discr, acc, num_steps_mode2)
         footprint_tab1 = footprint_tab1_2[0] # see if np.any below
     
         if np.any(footprint_tab1) :
             fp_1 = True
             if det_range :
-                header_str1 = "Mode2: omega, shift, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} num_steps2={} det_range={} km t_delay={} h_discr={} {}"
-                header_str1 = header_str1.format(m_type, i_type, h_int_min/1000, t_int_lnc, num_steps_mode2, det_range/1000, t_delay, h_discr/1000, search_type1)
-                chart_info_str1 = "h_int_min={} km t_int_lnc={} num_steps2={} det_range={} km t_delay={} h_discr={} {}"
-                chart_info_str1 = chart_info_str1.format(h_int_min/1000, t_int_lnc, num_steps_mode2, det_range/1000, t_delay, h_discr/1000, search_type1)
+                header_str1 = "Mode2: omega, shift, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} num_steps2={} det_range={} km t_delay={} h_discr={} {}"
+                header_str1 = header_str1.format(m_type, i_type, h_int_min/1000, maxia/1000, t_int_lnc, num_steps_mode2, det_range/1000, t_delay, h_discr/1000, search_type1)
+                chart_info_str1 = "min_ia={} maxia={} t_int_lnc={} num_steps2={} det_range={} km t_delay={} h_discr={} {}"
+                chart_info_str1 = chart_info_str1.format(h_int_min/1000, maxia/1000, t_int_lnc, num_steps_mode2, det_range/1000, t_delay, h_discr/1000, search_type1)
             else: 
-                header_str1 = "Mode2: omega, shift, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} num_steps2={} sat_delay={} h_discr={} {}"
-                header_str1 = header_str1.format(m_type, i_type, h_int_min/1000, t_int_lnc, num_steps_mode2, fcc_constants.sat_delay, h_discr/1000, search_type1)
-                chart_info_str1 = "h_int_min={} km t_int_lnc={} num_steps2={} sat_delay={} h_discr={} {}"
-                chart_info_str1 = chart_info_str1.format(h_int_min/1000, t_int_lnc, num_steps_mode2, fcc_constants.sat_delay, h_discr/1000, search_type1)
+                header_str1 = "Mode2: omega, shift, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={}m t_int_lnc={} num_steps2={} sat_delay={} h_discr={} {}"
+                header_str1 = header_str1.format(m_type, i_type, h_int_min/1000, maxia/1000, t_int_lnc, num_steps_mode2, fcc_constants.sat_delay, h_discr/1000, search_type1)
+                chart_info_str1 = "min_ia={} maxia={} t_int_lnc={} num_steps2={} sat_delay={} h_discr={} {}"
+                chart_info_str1 = chart_info_str1.format(h_int_min/1000, maxia/1000, t_int_lnc, num_steps_mode2, fcc_constants.sat_delay, h_discr/1000, search_type1)
             
             data_fname1 = footprint_path + "/footprint_mode2_m{}_i{}_{}{}.json".format(m_type, i_type, save_label1, t_stamp)
             if op_range :
@@ -2557,21 +2578,21 @@ def gui_double_footprint() :
             print("No Footprint Mode2 for " + search_type1 + " type of interception...")
     
         print("Footprint2 Mode2 interception type: " + search_type2)
-        footprint_tab2_2 = ss.footprint_mode2(search_func2, trj, int_table, h_int_min, t_int_lnc, angle_step_mode2, op_range, det_range, t_delay, h_discr, acc, num_steps_mode2)
+        footprint_tab2_2 = ss.footprint_mode2(search_func2, trj, int_table, h_int_min, maxia, t_int_lnc, angle_step_mode2, op_range, det_range, t_delay, h_discr, acc, num_steps_mode2)
         footprint_tab2 = footprint_tab2_2[0] # see if np.any below
     
         if np.any(footprint_tab2) :
             fp_2 = True
             if det_range :
-                header_str2 = "Mode2: omega, shift, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} num_steps2={} det_range={} km t_delay={} h_discr={} {}"
-                header_str2 = header_str2.format(m_type, i_type, h_int_min/1000, t_int_lnc, num_steps_mode2, det_range/1000, t_delay, h_discr/1000, search_type2)
-                chart_info_str2 = "h_int_min={} km t_int_lnc={} num_steps2={} det_range={} km t_delay={} h_discr={} {}"
-                chart_info_str2 = chart_info_str2.format(h_int_min/1000, t_int_lnc, num_steps_mode2, det_range/1000, t_delay, h_discr/1000, search_type2)
+                header_str2 = "Mode2: omega, shift, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} num_steps2={} det_range={} km t_delay={} h_discr={} {}"
+                header_str2 = header_str2.format(m_type, i_type, h_int_min/1000, maxia/1000, t_int_lnc, num_steps_mode2, det_range/1000, t_delay, h_discr/1000, search_type2)
+                chart_info_str2 = "min_ia={} maxia={} t_int_lnc={} num_steps2={} det_range={} km t_delay={} h_discr={} {}"
+                chart_info_str2 = chart_info_str2.format(h_int_min/1000, maxia/1000, t_int_lnc, num_steps_mode2, det_range/1000, t_delay, h_discr/1000, search_type2)
             else :
-                header_str2 = "Mode2: omega, shift, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} num_steps2={} sat_delay={} h_discr={} {}"
-                header_str2 = header_str2.format(m_type, i_type, h_int_min/1000, t_int_lnc, num_steps_mode2, fcc_constants.sat_delay, h_discr/1000, search_type2)
-                chart_info_str2 = "h_int_min={} km t_int_lnc={} num_steps2={} sat_delay={} h_discr={} {}"
-                chart_info_str2 = chart_info_str2.format(h_int_min/1000, t_int_lnc, num_steps_mode2, fcc_constants.sat_delay, h_discr/1000, search_type2)
+                header_str2 = "Mode2: omega, shift, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} num_steps2={} sat_delay={} h_discr={} {}"
+                header_str2 = header_str2.format(m_type, i_type, h_int_min/1000, maxia/1000, t_int_lnc, num_steps_mode2, fcc_constants.sat_delay, h_discr/1000, search_type2)
+                chart_info_str2 = "min_ia={} maxia={} t_int_lnc={} num_steps2={} sat_delay={} h_discr={} {}"
+                chart_info_str2 = chart_info_str2.format(h_int_min/1000, maxia/1000, t_int_lnc, num_steps_mode2, fcc_constants.sat_delay, h_discr/1000, search_type2)
             
             data_fname2 = footprint_path + "/footprint_mode2_m{}_i{}_{}{}.json".format(m_type, i_type, save_label2, t_stamp)
             if op_range :
@@ -2596,11 +2617,11 @@ def gui_double_footprint() :
     
             header_str = header_str1 + ', ' + search_type2
             if det_range :
-                chart_info_str = "h_int_min={} km t_int_lnc={} det_range={} km t_delay={} h_discr={} num_steps={}"
-                chart_info_str = chart_info_str.format(h_int_min/1000, t_int_lnc, det_range/1000, t_delay, h_discr/1000, num_steps_mode2)
+                chart_info_str = "min_ia={} maxia={} t_int_lnc={} det_range={} km t_delay={} h_discr={} num_steps={}"
+                chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, t_int_lnc, det_range/1000, t_delay, h_discr/1000, num_steps_mode2)
             else :
-                chart_info_str = "h_int_min={} km t_int_lnc={} sat_delay={} h_discr={} num_steps={}"
-                chart_info_str = chart_info_str.format(h_int_min/1000, t_int_lnc, fcc_constants.sat_delay, h_discr/1000, num_steps_mode2)
+                chart_info_str = "min_ia={} maxia={} t_int_lnc={} sat_delay={} h_discr={} num_steps={}"
+                chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, t_int_lnc, fcc_constants.sat_delay, h_discr/1000, num_steps_mode2)
     
             label_arr = [search_type1, search_type2]
             footprint_arr = [footprint_tab1_2, footprint_tab2_2]
@@ -2699,6 +2720,9 @@ def run_multi_detrange_footprint() : # actual routine, for window shell see gui_
     mpia *= 1000
     h_int_min = max(h_int_min, mpia)
 
+    maxia = interceptor_data['maxia']
+    maxia *= 1000
+
     op_range = interceptor_data['op_range']
     if op_range < 2000 :
         op_range *= 1000
@@ -2734,7 +2758,7 @@ def run_multi_detrange_footprint() : # actual routine, for window shell see gui_
         
             print("Detection range = {} km ".format(det_range/1000))
             
-            footprint_tab = fp.footprint_calc_v2(search_func, trj, int_table, h_int_min, t_int_lnc, angle_step, op_range, det_range, t_delay, h_discr, acc, dist)
+            footprint_tab = fp.footprint_calc_v2(search_func, trj, int_table, h_int_min, maxia, t_int_lnc, angle_step, op_range, det_range, t_delay, h_discr, acc, dist)
     
             if np.any(footprint_tab) :
                 fprint_tab_lst.append(footprint_tab)
@@ -2762,12 +2786,12 @@ def run_multi_detrange_footprint() : # actual routine, for window shell see gui_
             
         #header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
         #header_str = header_str.format(m_type, i_type, h_int_min/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type)
-        header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} angle_step={} t_delay={} h_discr={} det_range={} km {}"
-        header_str = header_str.format(m_type, i_type, h_int_min/1000, t_int_lnc, angle_step, t_delay, h_discr/1000, det_range_list, search_type)
+        header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} angle_step={} t_delay={} h_discr={} det_range={} km {}"
+        header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, t_int_lnc, angle_step, t_delay, h_discr/1000, det_range_list, search_type)
         data_fname = footprint_path + "/mdr-footprint_m{}_i{}_{}{}.json".format(m_type, i_type, save_label, t_stamp)
             
-        chart_info_str = "h_int_min={} km t_int_lnc={} angle_step={} t_delay={} h_discr={} {}"
-        chart_info_str = chart_info_str.format(h_int_min/1000, t_int_lnc, angle_step, t_delay, h_discr/1000, search_type)
+        chart_info_str = "min_ia={} maxia={} t_int_lnc={} angle_step={} t_delay={} h_discr={} {}"
+        chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, t_int_lnc, angle_step, t_delay, h_discr/1000, search_type)
         chart_info_str += "\nDetection ranges: " + info_str_b[:-2] + " km"
         chart_info_str += sat_delay_string
         if op_range :
@@ -2798,7 +2822,7 @@ def run_multi_detrange_footprint() : # actual routine, for window shell see gui_
         
             print("Detection range = {} km ".format(det_range/1000))
             
-            footprint_tab2 = ss.footprint_mode2(search_func, trj, int_table, h_int_min, t_int_lnc, angle_step_mode2, op_range, det_range, t_delay, h_discr, acc, num_steps_mode2)
+            footprint_tab2 = ss.footprint_mode2(search_func, trj, int_table, h_int_min, maxia, t_int_lnc, angle_step_mode2, op_range, det_range, t_delay, h_discr, acc, num_steps_mode2)
             """
             footprint_tab = footprint_tab2[0] # see if np.any below
     
@@ -2812,13 +2836,13 @@ def run_multi_detrange_footprint() : # actual routine, for window shell see gui_
             info_str_b += str(int(det_range/1000)) + ', '
     
             
-        header_str = "Mode2: angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} t_delay={} h_discr={} det_range={} km num_steps={} {}"
-        header_str = header_str.format(m_type, i_type, h_int_min/1000, t_int_lnc, t_delay, h_discr/1000, det_range_list, num_steps_mode2, search_type)
+        header_str = "Mode2: angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} t_delay={} h_discr={} det_range={} km num_steps={} {}"
+        header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, t_int_lnc, t_delay, h_discr/1000, det_range_list, num_steps_mode2, search_type)
         header_str  += sat_delay_string
         data_fname = footprint_path + "/mdr-footprint_mode2_m{}_i{}_{}{}.json".format(m_type, i_type, save_label, t_stamp)
             
-        chart_info_str = "h_int_min={} km t_int_lnc={} t_delay={} h_discr={} num_steps={} {}"
-        chart_info_str = chart_info_str.format(h_int_min/1000, t_int_lnc, t_delay, h_discr/1000, num_steps_mode2, search_type)
+        chart_info_str = "min_ia={} maxia={} t_int_lnc={} t_delay={} h_discr={} num_steps={} {}"
+        chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, t_int_lnc, t_delay, h_discr/1000, num_steps_mode2, search_type)
         chart_info_str += "\nDetection ranges: " + info_str_b[:-2] + " km"
         chart_info_str += sat_delay_string
         if op_range :
@@ -2909,6 +2933,12 @@ def run_param_h_discr() :
 def run_param_t_delay() :
     run_param_footprint('t_delay', t_delay_list_var.get())
 
+def run_param_op_range() :
+    run_param_footprint('op_range', op_range_list_var.get())
+
+def run_param_maxia() :
+    run_param_footprint('maxia', maxia_list_var.get())
+
 
 def run_param_footprint(par_key, par_list_string) : # actual routine, for window shell see gui_param_footprint
     m_type = mtype_var.get()
@@ -2985,6 +3015,9 @@ def run_param_footprint(par_key, par_list_string) : # actual routine, for window
     mpia *= 1000
     h_int_min = max(h_int_min, mpia)
 
+    maxia = interceptor_data['maxia']
+    maxia *= 1000
+
     op_range = interceptor_data['op_range']
     if op_range < 2000 :
         op_range *= 1000
@@ -3017,48 +3050,77 @@ def run_param_footprint(par_key, par_list_string) : # actual routine, for window
                     h_int_min *= 1000
                 #h_int_min = max(h_int_min, mpia) # h_int_min needs to be max of feasible and acceptable
                 if det_range :
-                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} t_int_lnc={} angle_step={} t_delay={} h_discr={} det_range={} km {}"
-                    header_str = header_str.format(m_type, i_type, burn_time + t_delay, angle_step, t_delay, h_discr/1000, det_range/1000, search_type)
-                    chart_info_str = "t_int_lnc={} angle_step={} t_delay={} h_discr={} det_range={} {}"
-                    chart_info_str = chart_info_str.format(burn_time + t_delay, angle_step, t_delay, h_discr/1000, det_range/1000, search_type)
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} maxia={} t_int_lnc={} angle_step={} t_delay={} h_discr={} det_range={} km {}"
+                    header_str = header_str.format(m_type, i_type, maxia/1000, burn_time + t_delay, angle_step, t_delay, h_discr/1000, det_range/1000, search_type)
+                    chart_info_str = " maxia={} t_int_lnc={} angle_step={} t_delay={} h_discr={} det_range={} {}"
+                    chart_info_str = chart_info_str.format(maxia/1000, burn_time + t_delay, angle_step, t_delay, h_discr/1000, det_range/1000, search_type)
                 else :
-                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} t_int_lnc={} angle_step={} h_discr={} sat_delay={} {}"
-                    header_str = header_str.format(m_type, i_type, burn_time + t_delay, angle_step, h_discr/1000, fcc_constants.sat_delay, search_type)
-                    chart_info_str = "t_int_lnc={} angle_step={} h_discr={} sat_delay={} {}"
-                    chart_info_str = chart_info_str.format(burn_time + t_delay, angle_step, h_discr/1000, fcc_constants.sat_delay, search_type)
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={}  maxia={} t_int_lnc={} angle_step={} h_discr={} sat_delay={} {}"
+                    header_str = header_str.format(m_type, i_type, maxia/1000, burn_time + t_delay, angle_step, h_discr/1000, fcc_constants.sat_delay, search_type)
+                    chart_info_str = " maxia={} t_int_lnc={} angle_step={} h_discr={} sat_delay={} {}"
+                    chart_info_str = chart_info_str.format(maxia/1000, burn_time + t_delay, angle_step, h_discr/1000, fcc_constants.sat_delay, search_type)
                 print("Min interception altitude = {} km ".format(h_int_min/1000))
             elif par_key == 'h_discr' :
                 h_discr = par
                 if h_discr < 1000 : # can be set in meters or km, convert to meters if set in km
                     h_discr *= 1000
                 if det_range :
-                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} angle_step={} t_delay={} det_range={} km {}"
-                    header_str = header_str.format(m_type, i_type, h_int_min/1000, burn_time + t_delay, angle_step, t_delay, det_range/1000, search_type)
-                    chart_info_str = "h_int_min={} km t_int_lnc={} angle_step={} t_delay={} det_range={} {}"
-                    chart_info_str = chart_info_str.format(h_int_min/1000, burn_time + t_delay, angle_step, t_delay, det_range/1000, search_type)
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} angle_step={} t_delay={} det_range={} km {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, burn_time + t_delay, angle_step, t_delay, det_range/1000, search_type)
+                    chart_info_str = "min_ia={} maxia={} t_int_lnc={} angle_step={} t_delay={} det_range={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, burn_time + t_delay, angle_step, t_delay, det_range/1000, search_type)
                 else :
-                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} angle_step={} sat_delay={} {}"
-                    header_str = header_str.format(m_type, i_type, h_int_min/1000, burn_time + t_delay, angle_step, fcc_constants.sat_delay, search_type)
-                    chart_info_str = "h_int_min={} km t_int_lnc={} angle_step={} sat_delay={} {}"
-                    chart_info_str = chart_info_str.format(h_int_min/1000, burn_time + t_delay, angle_step, fcc_constants.sat_delay, search_type)
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} angle_step={} sat_delay={} {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, burn_time + t_delay, angle_step, fcc_constants.sat_delay, search_type)
+                    chart_info_str = "min_ia={} maxia={} t_int_lnc={} angle_step={} sat_delay={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, burn_time + t_delay, angle_step, fcc_constants.sat_delay, search_type)
                 print("Warhead discrimination altitude = {} km ".format(h_discr/1000))
-            else :
+            elif par_key == 't_delay' :
                 t_delay = par
                 if det_range :
-                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km burn_time={} angle_step={} h_discr={} det_range={} km {}"
-                    header_str = header_str.format(m_type, i_type, h_int_min/1000, burn_time, angle_step, h_discr/1000, det_range/1000, search_type)
-                    chart_info_str = "h_int_min={} km burn_time={} angle_step={} h_discr={} det_range={} {}"
-                    chart_info_str = chart_info_str.format(h_int_min/1000, burn_time, angle_step, h_discr/1000, det_range/1000, search_type)
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} burn_time={} angle_step={} h_discr={} det_range={} km {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, burn_time, angle_step, h_discr/1000, det_range/1000, search_type)
+                    chart_info_str = "min_ia={} maxia={} burn_time={} angle_step={} h_discr={} det_range={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, burn_time, angle_step, h_discr/1000, det_range/1000, search_type)
                 else :
-                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km burn_time={} angle_step={} h_discr={} sat_delay={} {}"
-                    header_str = header_str.format(m_type, i_type, h_int_min/1000, burn_time, angle_step, h_discr/1000, fcc_constants.sat_delay, search_type)
-                    chart_info_str = "h_int_min={} km burn_time={} angle_step={} h_discr={} sat_delay={} {}"
-                    chart_info_str = chart_info_str.format(h_int_min/1000, burn_time, angle_step, h_discr/1000, fcc_constants.sat_delay, search_type)
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} burn_time={} angle_step={} h_discr={} sat_delay={} {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, burn_time, angle_step, h_discr/1000, fcc_constants.sat_delay, search_type)
+                    chart_info_str = "min_ia={} maxia={} burn_time={} angle_step={} h_discr={} sat_delay={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, burn_time, angle_step, h_discr/1000, fcc_constants.sat_delay, search_type)
                 print("Interceptor launch delay = {} s ".format(t_delay))
+            elif par_key == 'op_range' :
+                op_range = par * 1000
+                if det_range :
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} angle_step={} h_discr={} t_delay={} det_range={} km {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, burn_time + t_delay, angle_step, h_discr/1000, t_delay, det_range/1000, search_type)
+                    chart_info_str = "min_ia={} maxia={} t_int_lnc={} angle_step={} h_discr={} det_range={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, burn_time + t_delay, angle_step, h_discr/1000, det_range/1000, search_type)
+                else :
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} angle_step={} h_discr={} sat_delay={} {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, burn_time + t_delay, angle_step, h_discr/1000, fcc_constants.sat_delay, search_type)
+                    chart_info_str = "min_ia={} maxia={} t_int_lnc={} angle_step={} h_discr={} sat_delay={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, burn_time + t_delay, angle_step, h_discr/1000, fcc_constants.sat_delay, search_type)
+                print("Interceptor operational range = {} km ".format(op_range/1000))
+            elif par_key == 'maxia' :
+                maxia = par * 1000
+                if det_range :
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} t_int_lnc={} angle_step={} h_discr={} t_delay={} det_range={} km {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, burn_time + t_delay, angle_step, h_discr/1000, t_delay, det_range/1000, search_type)
+                    chart_info_str = "min_ia={} t_int_lnc={} angle_step={} h_discr={} det_range={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, burn_time + t_delay, angle_step, h_discr/1000, det_range/1000, search_type)
+                else :
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} t_int_lnc={} angle_step={} h_discr={} sat_delay={} {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, burn_time + t_delay, angle_step, h_discr/1000, fcc_constants.sat_delay, search_type)
+                    chart_info_str = "min_ia={} t_int_lnc={} angle_step={} h_discr={} sat_delay={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, burn_time + t_delay, angle_step, h_discr/1000, fcc_constants.sat_delay, search_type)
+                print("Maximum interception altitude = {} km ".format(maxia/1000))
+            else :
+                print("No such parameter")
+                return(False)
     
             t_int_lnc = burn_time + t_delay        
         
-            footprint_tab = fp.footprint_calc_v2(search_func, trj, int_table, h_int_min, t_int_lnc, angle_step, op_range, det_range, t_delay, h_discr, acc, dist)
+            footprint_tab = fp.footprint_calc_v2(search_func, trj, int_table, h_int_min, maxia, t_int_lnc, angle_step, op_range, det_range, t_delay, h_discr, acc, dist)
             if np.any(footprint_tab) :
                 fprint_tab_lst.append(footprint_tab)
             else:
@@ -3085,9 +3147,9 @@ def run_param_footprint(par_key, par_list_string) : # actual routine, for window
         units = ' s' if par_key == 't_delay' else ' km'
         chart_info_str += "\n" + par_key + '(s) : ' + info_str_b + units
         if op_range :
-            title_str = "Parameter Footprint: i_type={} op_range={:.0f} m_type={} mrange={:.0f} km".format(i_type, op_range/1000, m_type, mrange/1000)
+            title_str = "Parameter Footprint: i_type={} op_range={:.0f} min_ia={} max_ia={} m_type={} mrange={:.0f} km".format(i_type, op_range/1000, h_int_min/1000, maxia/1000, m_type, mrange/1000)
         else: 
-            title_str = "Parameter Footprint: i_type={} m_type={} mrange={:.0f} km".format(i_type, m_type, mrange/1000)
+            title_str = "Parameter Footprint: i_type={} min_ia={} max_ia={} m_type={} mrange={:.0f} km".format(i_type, h_int_min/1000, maxia/1000, m_type, mrange/1000)
         chart_fname = footprint_path + "/param-footprint_m{}_i{}_{}{}.png".format(m_type, i_type, save_label, t_stamp)
     
     else : # mode2
@@ -3110,48 +3172,77 @@ def run_param_footprint(par_key, par_list_string) : # actual routine, for window
                     h_int_min *= 1000
                 #h_int_min = max(h_int_min, mpia)
                 if det_range :
-                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} t_int_lnc={} t_delay={} h_discr={} num_steps={} det_range={} km {}"
-                    header_str = header_str.format(m_type, i_type, burn_time + t_delay, t_delay, h_discr/1000, num_steps_mode2, det_range/1000, search_type)
-                    chart_info_str = "t_int_lnc={} t_delay={} h_discr={} num_steps={} det_range={} {}"
-                    chart_info_str = chart_info_str.format(burn_time + t_delay, t_delay, h_discr/1000, num_steps_mode2, det_range/1000, search_type)
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} maxia={} t_int_lnc={} t_delay={} h_discr={} num_steps={} det_range={} km {}"
+                    header_str = header_str.format(m_type, i_type, maxia/1000, burn_time + t_delay, t_delay, h_discr/1000, num_steps_mode2, det_range/1000, search_type)
+                    chart_info_str = "maxia={} t_int_lnc={} t_delay={} h_discr={} num_steps={} det_range={} {}"
+                    chart_info_str = chart_info_str.format(maxia/1000, burn_time + t_delay, t_delay, h_discr/1000, num_steps_mode2, det_range/1000, search_type)
                 else :
-                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} t_int_lnc={} h_discr={} num_steps={} sat_delay={} km {}"
-                    header_str = header_str.format(m_type, i_type, burn_time + t_delay, h_discr/1000, num_steps_mode2, fcc_constants.sat_delay, search_type)
-                    chart_info_str = "t_int_lnc={} h_discr={} num_steps={} sat_delay={} {}"
-                    chart_info_str = chart_info_str.format(burn_time + t_delay, h_discr/1000, num_steps_mode2, fcc_constants.sat_delay, search_type)
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} maxia={} t_int_lnc={} h_discr={} num_steps={} sat_delay={} km {}"
+                    header_str = header_str.format(m_type, i_type, maxia/1000, burn_time + t_delay, h_discr/1000, num_steps_mode2, fcc_constants.sat_delay, search_type)
+                    chart_info_str = "maxia={} t_int_lnc={} h_discr={} num_steps={} sat_delay={} {}"
+                    chart_info_str = chart_info_str.format(maxia/1000, burn_time + t_delay, h_discr/1000, num_steps_mode2, fcc_constants.sat_delay, search_type)
                 print("Min interception altitude = {} km ".format(h_int_min/1000))
             elif par_key == 'h_discr' :
                 h_discr = par
                 if h_discr < 1000 : # can be set in meters or km, convert to meters if set in km
                     h_discr *= 1000
                 if det_range :
-                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} t_delay={} num_steps={} det_range={} km {}"
-                    header_str = header_str.format(m_type, i_type, h_int_min/1000, burn_time + t_delay, t_delay, num_steps_mode2, det_range/1000, search_type)
-                    chart_info_str = "h_int_min={} km t_int_lnc={} t_delay={} num_steps={} det_range={} {}"
-                    chart_info_str = chart_info_str.format(h_int_min/1000, burn_time + t_delay, t_delay, num_steps_mode2, det_range/1000, search_type)
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} t_delay={} num_steps={} det_range={} km {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, burn_time + t_delay, t_delay, num_steps_mode2, det_range/1000, search_type)
+                    chart_info_str = "min_ia={} maxia={} t_int_lnc={} t_delay={} num_steps={} det_range={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, burn_time + t_delay, t_delay, num_steps_mode2, det_range/1000, search_type)
                 else :
-                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} num_steps={} sat_delay={} {}"
-                    header_str = header_str.format(m_type, i_type, h_int_min/1000, burn_time + t_delay, num_steps_mode2, fcc_constants.sat_delay, search_type)
-                    chart_info_str = "h_int_min={} km t_int_lnc={} num_steps={} sat_delay={} {}"
-                    chart_info_str = chart_info_str.format(h_int_min/1000, burn_time + t_delay, num_steps_mode2, fcc_constants.sat_delay, search_type)
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} num_steps={} sat_delay={} {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, burn_time + t_delay, num_steps_mode2, fcc_constants.sat_delay, search_type)
+                    chart_info_str = "min_ia={} maxia={} t_int_lnc={} num_steps={} sat_delay={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, burn_time + t_delay, num_steps_mode2, fcc_constants.sat_delay, search_type)
                 print("Warhead discrimination altitude = {} km ".format(h_discr/1000))
-            else :
+            elif par_key == 't_delay' :
                 t_delay = par
                 if det_range :
-                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km burn_time={} h_discr={} num_steps={} det_range={} km {}"
-                    header_str = header_str.format(m_type, i_type, h_int_min/1000, burn_time, h_discr/1000, num_steps_mode2, det_range/1000, search_type)
-                    chart_info_str = "h_int_min={} km burn_time={} h_discr={} num_steps={} det_range={} {}"
-                    chart_info_str = chart_info_str.format(h_int_min/1000, burn_time, h_discr/1000, num_steps_mode2, det_range/1000, search_type)
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} burn_time={} h_discr={} num_steps={} det_range={} km {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, burn_time, h_discr/1000, num_steps_mode2, det_range/1000, search_type)
+                    chart_info_str = "min_ia={} maxia={} burn_time={} h_discr={} num_steps={} det_range={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, burn_time, h_discr/1000, num_steps_mode2, det_range/1000, search_type)
                 else :
-                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km burn_time={} h_discr={} num_steps={} sat_delay={} {}"
-                    header_str = header_str.format(m_type, i_type, h_int_min/1000, burn_time, h_discr/1000, num_steps_mode2, fcc_constants.sat_delay, search_type)
-                    chart_info_str = "h_int_min={} km burn_time={} h_discr={} num_steps={} sat_delay={} {}"
-                    chart_info_str = chart_info_str.format(h_int_min/1000, burn_time, h_discr/1000, num_steps_mode2, fcc_constants.sat_delay, search_type)
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} burn_time={} h_discr={} num_steps={} sat_delay={} {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, burn_time, h_discr/1000, num_steps_mode2, fcc_constants.sat_delay, search_type)
+                    chart_info_str = "min_ia={} maxia={} burn_time={} h_discr={} num_steps={} sat_delay={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, burn_time, h_discr/1000, num_steps_mode2, fcc_constants.sat_delay, search_type)
                 print("Interceptor launch delay = {} s ".format(t_delay))
-
+            elif par_key == 'op_range' :
+                op_range = par * 1000
+                if det_range :
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} h_discr={} t_delay={} num_steps={} det_range={} km {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, burn_time + t_delay, h_discr/1000, t_delay, num_steps_mode2, det_range/1000, search_type)
+                    chart_info_str = "min_ia={} maxia={} t_int_lnc={} h_discr={} num_steps={} det_range={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, burn_time + t_delay, h_discr/1000, num_steps_mode2, det_range/1000, search_type)
+                else :
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} maxia={} t_int_lnc={} h_discr={} num_steps={} sat_delay={} {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, maxia/1000, burn_time + t_delay, h_discr/1000, num_steps_mode2, fcc_constants.sat_delay, search_type)
+                    chart_info_str = "min_ia={} maxia={} t_int_lnc={} h_discr={} num_steps={} sat_delay={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, burn_time + t_delay, h_discr/1000, num_steps_mode2, fcc_constants.sat_delay, search_type)
+                print("Interceptor operational range = {} km ".format(op_range/1000))
+            elif par_key == 'maxia' :
+                maxia = par * 1000
+                if det_range :
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} t_int_lnc={} h_discr={} t_delay={} num_steps={} det_range={} km {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, burn_time + t_delay, h_discr/1000, t_delay, num_steps_mode2, det_range/1000, search_type)
+                    chart_info_str = "min_ia={} t_int_lnc={} h_discr={} num_steps={} det_range={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, burn_time + t_delay, h_discr/1000, num_steps_mode2, det_range/1000, search_type)
+                else :
+                    header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} min_ia={} t_int_lnc={} h_discr={} num_steps={} sat_delay={} {}"
+                    header_str = header_str.format(m_type, i_type, h_int_min/1000, burn_time + t_delay, h_discr/1000, num_steps_mode2, fcc_constants.sat_delay, search_type)
+                    chart_info_str = "min_ia={} t_int_lnc={} h_discr={} num_steps={} sat_delay={} {}"
+                    chart_info_str = chart_info_str.format(h_int_min/1000, burn_time + t_delay, h_discr/1000, num_steps_mode2, fcc_constants.sat_delay, search_type)
+                print("Maximum interception altitude = {} km ".format(maxia/1000))
+            else :
+                print("No such parameter")
+                return(False)
+    
             t_int_lnc = burn_time + t_delay        
         
-            footprint_tab2 = ss.footprint_mode2(search_func, trj, int_table, h_int_min, t_int_lnc, angle_step_mode2, op_range, det_range, t_delay, h_discr, acc, num_steps_mode2)
+            footprint_tab2 = ss.footprint_mode2(search_func, trj, int_table, h_int_min, maxia, t_int_lnc, angle_step_mode2, op_range, det_range, t_delay, h_discr, acc, num_steps_mode2)
             fprint_tab_lst.append(footprint_tab2)
                 
         data_fname = "nparam-footprint_mode2_m{}_i{}_{}{}.json".format(m_type, i_type, save_label, t_stamp)
@@ -3210,17 +3301,33 @@ def gui_param_footprint() : # routine's window shell, for actual routine see run
         btn_par_t_delay = Button(npar_fprint_win, text="Compute", command=lambda: call_longrun(run_param_t_delay))
         if tooltips: tt3 = ToolTip(lbl_par_t_delay, msg="Launch delay after missile rise over horizon or missile burnout, whichever comes later. No delay at all (including burn-out) if =0.", delay=1.0)
 
+        lbl_par_op_range = Label(npar_fprint_win, text="Interceptor operational range, km (no limit if =0)")
+        ent_par_op_range = CEntry(npar_fprint_win, textvariable=op_range_list_var, width=30)
+        btn_par_op_range = Button(npar_fprint_win, text="Compute", command=lambda: call_longrun(run_param_op_range))
+        if tooltips: tt4 = ToolTip(lbl_par_op_range, msg="Interceptor operational range. No limit if =0.", delay=1.0)
+
+        lbl_par_maxia = Label(npar_fprint_win, text="Maximum interception altitude, km (no limit if =0)")
+        ent_par_maxia = CEntry(npar_fprint_win, textvariable=maxia_list_var, width=30)
+        btn_par_maxia = Button(npar_fprint_win, text="Compute", command=lambda: call_longrun(run_param_maxia))
+        if tooltips: tt5 = ToolTip(lbl_par_maxia, msg="Maximum interception altitude. No limit if =0.", delay=1.0)
+
         lbl_par_h_int_min.grid(row=0, column=0, sticky='w')
-        lbl_par_h_discr.grid(row=1, column=0, sticky='w')
-        lbl_par_t_delay.grid(row=2, column=0, sticky='w')
+        lbl_par_h_discr.grid(  row=1, column=0, sticky='w')
+        lbl_par_t_delay.grid(  row=2, column=0, sticky='w')
+        lbl_par_op_range.grid( row=3, column=0, sticky='w')
+        lbl_par_maxia.grid(    row=4, column=0, sticky='w')
 
         ent_par_h_int_min.grid(row=0, column=1)
-        ent_par_h_discr.grid(row=1, column=1)
-        ent_par_t_delay.grid(row=2, column=1)   
+        ent_par_h_discr.grid(  row=1, column=1)
+        ent_par_t_delay.grid(  row=2, column=1)   
+        ent_par_op_range.grid( row=3, column=1)   
+        ent_par_maxia.grid(  row=4, column=1)   
         
         btn_par_h_int_min.grid(row=0, column=2, ipady=1)
-        btn_par_h_discr.grid(row=1, column=2, sticky='ew', ipady=1)
-        btn_par_t_delay.grid(row=2, column=2, sticky='ew', ipady=1)
+        btn_par_h_discr.grid(  row=1, column=2, sticky='ew', ipady=1)
+        btn_par_t_delay.grid(  row=2, column=2, sticky='ew', ipady=1)
+        btn_par_op_range.grid( row=3, column=2, sticky='ew', ipady=1)
+        btn_par_maxia.grid(    row=4, column=2, sticky='ew', ipady=1)
 
         #rc_menu_string ='copy-paste-cut'
         #npar_fprint_win.bind(right_click, lambda event, arg=rc_menu_string : show_rc_menu(event, arg))
@@ -3233,6 +3340,10 @@ def gui_param_footprint() : # routine's window shell, for actual routine see run
                 tt2.withdraw()
                 tt3.status='outside'
                 tt3.withdraw()
+                tt4.status='outside'
+                tt4.withdraw()
+                tt5.status='outside'
+                tt5.withdraw()
             npar_fprint_win.destroy()
                 
         npar_fprint_win.focus_force()
@@ -3345,6 +3456,9 @@ def run_multi_interceptor_footprint() : # actual routine, for window shell see g
             mpia *= 1000
             h_int_min = max(h_int_min_keep, mpia)
         
+            maxia = interceptor_data['maxia']
+            maxia *= 1000
+
             op_range = interceptor_data['op_range']
             if op_range < 2000 :
                 op_range *= 1000
@@ -3371,7 +3485,7 @@ def run_multi_interceptor_footprint() : # actual routine, for window shell see g
             
             print("Type of interception: " + search_type)
         
-            footprint_tab = fp.footprint_calc_v2(search_func, trj, int_table, h_int_min, t_int_lnc, angle_step, op_range, det_range, t_delay, h_discr, acc, dist)
+            footprint_tab = fp.footprint_calc_v2(search_func, trj, int_table, h_int_min, maxia, t_int_lnc, angle_step, op_range, det_range, t_delay, h_discr, acc, dist)
             if np.any(footprint_tab) :
                 fprint_tab_lst.append(footprint_tab)
             else:
@@ -3389,11 +3503,11 @@ def run_multi_interceptor_footprint() : # actual routine, for window shell see g
             
         #header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
         #header_str = header_str.format(m_type, i_type, h_int_min/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type)
-        header_str = "angle, distance, acc_prm, x, y, i_types=" + info_str_b[:-2] + " m_type={} h_int_min={} km t_int_lnc={} angle_step={} t_delay={} h_discr={} {}"
+        header_str = "angle, distance, acc_prm, x, y, i_types=" + info_str_b[:-2] + " m_type={} min_acc_ia={} t_int_lnc={} angle_step={} t_delay={} h_discr={} {}"
         header_str = header_str.format(m_type, h_int_min_keep/1000, t_int_lnc, angle_step, t_delay, h_discr/1000, search_type)
         data_fname = footprint_path + "/muin-footprint_" + info_str_a[:-1] + "_m{}_{}{}.json".format(m_type, save_label, t_stamp)
             
-        chart_info_str = "h_int_min={} km t_int_lnc={} angle_step={} t_delay={} h_discr={} {}"
+        chart_info_str = "min_acc_ia={} t_int_lnc={} angle_step={} t_delay={} h_discr={} {}"
         chart_info_str = chart_info_str.format(h_int_min_keep/1000, t_int_lnc, angle_step, t_delay, h_discr/1000, search_type)
         chart_info_str += "\nInterceptors: " + info_str_2[:-2]
         title_str = "Multi-Interceptor Footprint: m_type={} mrange={:.0f} i_types=".format(m_type, mrange/1000)  + info_str_b[:-2]
@@ -3416,6 +3530,9 @@ def run_multi_interceptor_footprint() : # actual routine, for window shell see g
             mpia *= 1000
             h_int_min = max(h_int_min_keep, mpia)
         
+            maxia = interceptor_data['maxia']
+            maxia *= 1000
+
             op_range = interceptor_data['op_range']
             if op_range < 2000 :
                 op_range *= 1000
@@ -3442,7 +3559,7 @@ def run_multi_interceptor_footprint() : # actual routine, for window shell see g
             
             print("Type of interception: " + search_type)
         
-            footprint_tab2 = ss.footprint_mode2(search_func, trj, int_table, h_int_min, t_int_lnc, angle_step_mode2, op_range, det_range, t_delay, h_discr, acc, num_steps_mode2)
+            footprint_tab2 = ss.footprint_mode2(search_func, trj, int_table, h_int_min, maxia, t_int_lnc, angle_step_mode2, op_range, det_range, t_delay, h_discr, acc, num_steps_mode2)
             fprint_tab_lst.append(footprint_tab2)
                 
             #label_lst.append("m{} dr={}".format(m_type, int(det_range/1000)))
@@ -3455,11 +3572,11 @@ def run_multi_interceptor_footprint() : # actual routine, for window shell see g
                 info_str_2 += "i{:.2f}".format(i_type) + " dr={:.0f} sd={}".format(det_range/1000, fcc_constants.sat_delay) + ', '
             #info_str_2 += "m{}".format(m_type) + " range {:.0f} km".format(mrange/1000) + ', '
 
-        header_str = "Mode2: angle, distance, acc_prm, x, y, i_types=" + info_str_b[:-2] + " m_type={} h_int_min={} km t_int_lnc={} t_delay={} h_discr={} num_steps={} {}"
+        header_str = "Mode2: angle, distance, acc_prm, x, y, i_types=" + info_str_b[:-2] + " m_type={} min_acc_ia={} t_int_lnc={} t_delay={} h_discr={} num_steps={} {}"
         header_str = header_str.format(m_type, h_int_min_keep/1000, t_int_lnc, t_delay, h_discr/1000, num_steps_mode2, search_type)
         data_fname = footprint_path + "/muin-footprint_mode2_" + info_str_a[:-1] + "_m{}_{}{}.json".format(m_type, save_label, t_stamp)
             
-        chart_info_str = "h_int_min={} km t_int_lnc={} t_delay={} h_discr={} num_steps={} {}"
+        chart_info_str = "min_acc_ia={} t_int_lnc={} t_delay={} h_discr={} num_steps={} {}"
         chart_info_str = chart_info_str.format(h_int_min_keep/1000, t_int_lnc, t_delay, h_discr/1000, num_steps_mode2, search_type)
         chart_info_str += "\nInterceptors: " + info_str_2[:-2]
         title_str = "Multi-Interceptor Footprint Mode2: m_type={} mrange={:.0f} i_types=".format(m_type, mrange/1000)  + info_str_b[:-2]
@@ -3578,6 +3695,9 @@ def run_multi_missile_footprint() : # actual routine, for window shell see gui_m
     mpia *= 1000
     h_int_min = max(h_int_min, mpia)
 
+    maxia = interceptor_data['maxia']
+    maxia *= 1000
+
     op_range = interceptor_data['op_range']
     if op_range < 2000 :
         op_range *= 1000
@@ -3645,7 +3765,7 @@ def run_multi_missile_footprint() : # actual routine, for window shell see gui_m
             
             print("Type of interception: " + search_type)
         
-            footprint_tab = fp.footprint_calc_v2(search_func, trj, int_table, h_int_min, t_int_lnc, angle_step, op_range, det_range, t_delay, h_discr, acc, dist)
+            footprint_tab = fp.footprint_calc_v2(search_func, trj, int_table, h_int_min, maxia, t_int_lnc, angle_step, op_range, det_range, t_delay, h_discr, acc, dist)
             if np.any(footprint_tab) :
                 fprint_tab_lst.append(footprint_tab)
             else:
@@ -3679,12 +3799,12 @@ def run_multi_missile_footprint() : # actual routine, for window shell see gui_m
             
         #header_str = "angle, distance, acc_prm, x, y, m_type={} i_type={} h_int_min={} km t_int_lnc={} angle_step={} det_range={} km t_delay={} h_discr={} {}"
         #header_str = header_str.format(m_type, i_type, h_int_min/1000, t_int_lnc, angle_step, det_range/1000, t_delay, h_discr/1000, search_type)
-        header_str = "angle, distance, acc_prm, x, y, m_types=" + info_str_b[:-2] + " i_type={} h_int_min={} km t_int_lnc={} angle_step={} t_delay={} h_discr={} {}"
-        header_str = header_str.format(i_type, h_int_min/1000, t_int_lnc, angle_step, t_delay, h_discr/1000, search_type)
+        header_str = "angle, distance, acc_prm, x, y, m_types=" + info_str_b[:-2] + " i_type={} min_ia={} maxia={} t_int_lnc={} angle_step={} t_delay={} h_discr={} {}"
+        header_str = header_str.format(i_type, h_int_min/1000, maxia/1000, t_int_lnc, angle_step, t_delay, h_discr/1000, search_type)
         data_fname = footprint_path + "/mumi-footprint_" + info_str_a[:-1] + "_i{}_{}{}.json".format(i_type, save_label, t_stamp)
             
-        chart_info_str = "h_int_min={} km t_int_lnc={} angle_step={} t_delay={} h_discr={} {}"
-        chart_info_str = chart_info_str.format(h_int_min/1000, t_int_lnc, angle_step, t_delay, h_discr/1000, search_type)
+        chart_info_str = "min_ia={} maxia={} t_int_lnc={} angle_step={} t_delay={} h_discr={} {}"
+        chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, t_int_lnc, angle_step, t_delay, h_discr/1000, search_type)
         chart_info_str += "\nMissiles: " + info_str_2[:-2]
         if op_range :
             title_str = "Multi-Missile Footprint: i_type={} op_range={:.0f} m_types=".format(i_type, op_range/1000)  + info_str_b[:-2]
@@ -3743,7 +3863,7 @@ def run_multi_missile_footprint() : # actual routine, for window shell see gui_m
             
             print("Type of interception: " + search_type)
         
-            footprint_tab2 = ss.footprint_mode2(search_func, trj, int_table, h_int_min, t_int_lnc, angle_step_mode2, op_range, det_range, t_delay, h_discr, acc, num_steps_mode2)
+            footprint_tab2 = ss.footprint_mode2(search_func, trj, int_table, h_int_min, maxia, t_int_lnc, angle_step_mode2, op_range, det_range, t_delay, h_discr, acc, num_steps_mode2)
             fprint_tab_lst.append(footprint_tab2)
             
             if det_range :
@@ -3755,12 +3875,12 @@ def run_multi_missile_footprint() : # actual routine, for window shell see gui_m
             info_str_b += "m{}".format(m_type) + ', '
             info_str_2 += "m{}".format(m_type) + " range {:.0f} km".format(mrange/1000) + ', '
 
-        header_str = "Mode2: angle, distance, acc_prm, x, y, m_types=" + info_str_b[:-2] + " i_type={} h_int_min={} km t_int_lnc={} t_delay={} h_discr={} num_steps={} {}"
-        header_str = header_str.format(i_type, h_int_min/1000, t_int_lnc, t_delay, h_discr/1000, num_steps_mode2, search_type)
+        header_str = "Mode2: angle, distance, acc_prm, x, y, m_types=" + info_str_b[:-2] + " i_type={} min_ia={} maxia={} t_int_lnc={} t_delay={} h_discr={} num_steps={} {}"
+        header_str = header_str.format(i_type, h_int_min/1000, maxia/1000, t_int_lnc, t_delay, h_discr/1000, num_steps_mode2, search_type)
         data_fname = "mumi-footprint_mode2_" + info_str_a[:-1] + "_i{}_{}{}.json".format(i_type, save_label, t_stamp)
             
-        chart_info_str = "h_int_min={} km t_int_lnc={} t_delay={} h_discr={} num_steps={} {}"
-        chart_info_str = chart_info_str.format(h_int_min/1000, t_int_lnc, t_delay, h_discr/1000, num_steps_mode2, search_type)
+        chart_info_str = "min_ia={} maxia={} t_int_lnc={} t_delay={} h_discr={} num_steps={} {}"
+        chart_info_str = chart_info_str.format(h_int_min/1000, maxia/1000, t_int_lnc, t_delay, h_discr/1000, num_steps_mode2, search_type)
         chart_info_str += "\nMissiles: " + info_str_2[:-2]
         if op_range :
             title_str = "Multi-Missile Footprint Mode2: i_type={} op_range={:.0f} m_types=".format(i_type, op_range/1000)  + info_str_b[:-2]
@@ -4054,6 +4174,9 @@ def run_probing() :
     mpia *= 1000
     h_int_min = max(h_int_min, mpia)
 
+    maxia = interceptor_data['maxia']
+    maxia *= 1000
+
     op_range = interceptor_data['op_range']
     if op_range < 2000 :
         op_range *= 1000
@@ -4110,7 +4233,8 @@ def run_probing() :
         fp_by_probing = ss.angle_dist_tab2(search_func,
                                              trj,
                                              int_table,
-                                             h_int_min,
+                                             h_int_min, 
+                                             maxia,
                                              t_int_lnc,
                                              op_range,
                                              det_range,
@@ -4141,7 +4265,8 @@ def run_probing() :
         fp_by_probing = ss.probing2(search_func,
                                              trj,
                                              int_table,
-                                             h_int_min,
+                                             h_int_min, 
+                                             maxia,
                                              t_int_lnc,
                                              op_range,
                                              det_range,
@@ -4201,6 +4326,7 @@ def run_probing() :
                                           trj, 
                                           int_table, 
                                           h_int_min, 
+                                          maxia, 
                                           t_int_lnc, 
                                           angle_step_mode2, 
                                           op_range, 
@@ -4215,7 +4341,7 @@ def run_probing() :
                                           itype)
 
         else :
-            fp_tab = fp.footprint_calc_v2(search_func, trj, int_table, h_int_min, t_int_lnc, angle_step, op_range, det_range, t_delay, h_discr, acc, dist)
+            fp_tab = fp.footprint_calc_v2(search_func, trj, int_table, h_int_min, maxia, t_int_lnc, angle_step, op_range, det_range, t_delay, h_discr, acc, dist)
     
     """
     if np.any(fp_tab) :
@@ -4596,7 +4722,8 @@ def rocket_editor(is_missile=True) :
                     "range" : rrange_var.get(),
                     "traj_type" : trajtype_var.get(),
                     "mpia" : mpia_var.get(),
-                    "op_range" : oprange_var.get(),
+                    "maxia" : maxia_var.get(),
+                    "op_range" : op_range_var.get(),
                     "det_range" : detrange_var.get(),
                     "note" : note_var.get()
                 }
@@ -4667,6 +4794,7 @@ def rocket_editor(is_missile=True) :
             save_data["traj_type"] = 'int_endo'
             save_data["vert_launch_height"] = '0'
             save_data["mpia"] = '0'
+            save_data["maxia"] = '0'
             save_data["op_range"] = ''
             save_data["det_range"] = ''
             save_data.pop("m_key")
@@ -4781,7 +4909,7 @@ def rocket_editor(is_missile=True) :
         if is_missile : # "Note" entry
             frm_row0.rowconfigure(19, weight=1)
         else :
-            frm_row0.rowconfigure(22, weight=1)
+            frm_row0.rowconfigure(23, weight=1)
 
         frm_row1.columnconfigure(0, weight=1, uniform='r_edit_buttons')
         frm_row1.columnconfigure(1, weight=1, uniform='r_edit_buttons')
@@ -4845,7 +4973,8 @@ def rocket_editor(is_missile=True) :
         trajtype_var = StringVar(medit_win, value = s_data["traj_type"])
         if not is_missile :
             mpia_var = StringVar(medit_win, value = s_data["mpia"])
-            oprange_var = StringVar(medit_win, value = s_data["op_range"])
+            maxia_var = StringVar(medit_win, value = s_data["maxia"])
+            op_range_var = StringVar(medit_win, value = s_data["op_range"])
             detrange_var = StringVar(medit_win, value = s_data["det_range"])
         rrange_var = StringVar(medit_win, value = s_data["range"])
         note_var = StringVar(medit_win, value = s_data["note"])
@@ -4872,13 +5001,14 @@ def rocket_editor(is_missile=True) :
         lbl_trajtype = Label(frm_row0, text = "Trajectory type")
         if is_missile :
             lbl_gtangle = Label(frm_row0, text = "Initial gravity turn angle, degrees")
-            lbl_mrange = Label(frm_row0, text = "Missile range (text, for reference)")
+            lbl_mrange = Label(frm_row0, text = 'For ALBM launch speed in m/s as "albm xxxx"' )
         else :
             lbl_fpangle = Label(frm_row0, text = "Flight path angle, degrees (for test)")
-            lbl_mpia = Label(frm_row0, text = "Min feasible intercept alt, km (0 = not used)")
-            lbl_oprange = Label(frm_row0, text = "Operational range, km (0 = not used)")
+            lbl_mpia = Label(frm_row0, text = "MIN feasible intercept alt, km (0 = not used)")
+            lbl_maxia = Label(frm_row0, text = "MAXimum intercept alt, km (0 = not used)")
+            lbl_op_range = Label(frm_row0, text = "Operational range, km (0 = not used)")
             lbl_detrange = Label(frm_row0, text = "Detection ranges for missiles, km")
-            lbl_irange = Label(frm_row0, text = "Interceptor range (text, for reference)")
+            lbl_irange = Label(frm_row0, text = "Note")
         lbl_note = Label(frm_row0, text = "Notes")
         
         ent_mkey = Entry(frm_row0, textvariable=r_key_var, state="readonly")
@@ -4913,7 +5043,8 @@ def rocket_editor(is_missile=True) :
                 ent_vlheight = Entry(frm_row0, textvariable=vlheight_var)
             ent_fpangle = CEntry(frm_row0, textvariable=fpangle_var)
             ent_mpia = CEntry(frm_row0, textvariable=mpia_var)
-            ent_oprange = CEntry(frm_row0, textvariable=oprange_var)
+            ent_maxia = CEntry(frm_row0, textvariable=maxia_var)
+            ent_op_range = CEntry(frm_row0, textvariable=op_range_var)
             ent_detrange = CEntry(frm_row0, textvariable=detrange_var)
 
         ent_rrange = CEntry(frm_row0, textvariable=rrange_var)
@@ -4978,15 +5109,17 @@ def rocket_editor(is_missile=True) :
             ent_fpangle.grid(row=17, column=1, columnspan=2, sticky='ew')            
             lbl_mpia.grid(row=18, column=0, sticky='w', ipadx=3)
             ent_mpia.grid(row=18, column=1, columnspan=2, sticky='ew')
-            lbl_oprange.grid(row=19, column=0, sticky='w', ipadx=3)
-            ent_oprange.grid(row=19, column=1, columnspan=2, sticky='ew')
-            lbl_detrange.grid(row=20, column=0, sticky='w', ipadx=3)
-            ent_detrange.grid(row=20, column=1, columnspan=2, sticky='ew')
-            lbl_irange.grid(row=21, column=0, sticky='w', ipadx=3)
-            ent_rrange.grid(row=21, column=1, columnspan=2, sticky='ew')
-            """ above weight of row 22 set to 1 """
-            lbl_note.grid(row=22, column=0, sticky='nw', ipadx=3)
-            ent_note.grid(row=22, column=1, columnspan=2, sticky='news')
+            lbl_maxia.grid(row=19, column=0, sticky='w', ipadx=3)
+            ent_maxia.grid(row=19, column=1, columnspan=2, sticky='ew')
+            lbl_op_range.grid(row=20, column=0, sticky='w', ipadx=3)
+            ent_op_range.grid(row=20, column=1, columnspan=2, sticky='ew')
+            lbl_detrange.grid(row=21, column=0, sticky='w', ipadx=3)
+            ent_detrange.grid(row=21, column=1, columnspan=2, sticky='ew')
+            lbl_irange.grid(row=22, column=0, sticky='w', ipadx=3)
+            ent_rrange.grid(row=22, column=1, columnspan=2, sticky='ew')
+            """ above weight of row 23 set to 1 """
+            lbl_note.grid(row=23, column=0, sticky='nw', ipadx=3)
+            ent_note.grid(row=23, column=1, columnspan=2, sticky='news')
         if tooltips: 
             tt_re = []
             tt_re.append(ToolTip(lbl_cdtype, msg="ls - large solid fuel (eg, MM or Trident); ll - large liquid fuel (eg, Atlas, Titan, SLV); v2 - V2-like (e.g., small missile with fins)", delay=1.0))
@@ -5082,6 +5215,8 @@ if __name__ == '__main__':
     h_int_min_list_var = StringVar(root, value = program_config['h_int_min_list'])
     h_discr_list_var = StringVar(root, value = program_config['h_discr_list'])
     t_delay_list_var = StringVar(root, value = program_config['t_delay_list'])
+    op_range_list_var = StringVar(root, value = program_config['op_range_list'])
+    maxia_list_var = StringVar(root, value = program_config['maxia_list'])
     
     fp_calc_mode_var = BooleanVar(root, value = program_config['fp_calc_mode'])
     acc_var = DoubleVar(root, value = program_config['acc'])

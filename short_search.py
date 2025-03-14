@@ -1,6 +1,7 @@
 import balmis as bm
 import time
 import tables_v2b as tb
+import footprintv2 as fp
 import numpy as np
 from math import pi, radians, degrees, sin, cos, acos, asin, tan, ceil, sqrt
 from fcc_constants import R_e, eps, angle_eps, out_time_freq, dist_limit, \
@@ -12,7 +13,7 @@ global dist_to_trj_min
 shift_min = 1000 # min distance between ILP and MLP
 
 #@profile
-def short_search(trj, int_table, h_int_min, t_int_lnc, fi_opt, dist_opt, op_range, det_range, t_delay=0, h_discr=0, mode2=False, debug_hits=False, sls_second=False) :
+def short_search(trj, int_table, h_int_min, maxia, t_int_lnc, fi_opt, dist_opt, op_range, det_range, t_delay=0, h_discr=0, mode2=False, debug_hits=False, sls_second=False) :
     """
     Finds the earliest interception point.
     
@@ -249,12 +250,12 @@ def short_search(trj, int_table, h_int_min, t_int_lnc, fi_opt, dist_opt, op_rang
             m_rad = mis_traj[i_m_beta, 1]
             #if i_m_beta == 610 :                           # debug delete
             #    print("i_m_beta = 610", mis_traj[610])     # debug delete
-            """ tested interception only below 100 km for endo
+            
             x_rad = mis_traj[i_m_beta, 3]
-            y_rad = mis_traj[i_m_beta, 4]
+            y_rad = mis_traj[i_m_beta, 4] + R_e
             int_altitude = sqrt(x_rad*x_rad + y_rad*y_rad) - R_e
-            """
-            if ((not op_range) or (m_rad <= op_range)) and (m_beta > othi_r) : # and ((not h_discr) or (int_altitude < bm.atm_limit_100)) : #checking in-atm only functionalit for endo
+            
+            if ((not op_range) or (m_rad <= op_range)) and (m_beta > othi_r) and ((not maxia) or (int_altitude <= maxia)) : # and ((not h_discr) or (int_altitude < bm.atm_limit_100)) : #checking in-atm only functional for endo
                 #continue
                 i_a = 0
                 i_b = len(int_table[i_i_beta]) - 1
@@ -458,11 +459,11 @@ def short_search(trj, int_table, h_int_min, t_int_lnc, fi_opt, dist_opt, op_rang
 
 """ End of short_search """
 
-def short_search2(trj, int_table, h_int_min, t_int_lnc, omega, shift, op_range, det_range, t_delay=0, h_discr=0, debug_hits=False) :
-    return short_search(trj, int_table, h_int_min, t_int_lnc, omega, shift, op_range, det_range, t_delay, h_discr, True, debug_hits)
+def short_search2(trj, int_table, h_int_min, maxia, t_int_lnc, omega, shift, op_range, det_range, t_delay=0, h_discr=0, debug_hits=False) :
+    return short_search(trj, int_table, h_int_min, maxia, t_int_lnc, omega, shift, op_range, det_range, t_delay, h_discr, True, debug_hits)
 
 
-def sls_search(trj, int_table, h_int_min, t_int_lnc, fi_opt, dist_opt, op_range, det_range, t_delay=0, h_discr=0, mode2=False, debug_hits=False) :
+def sls_search(trj, int_table, h_int_min, maxia, t_int_lnc, fi_opt, dist_opt, op_range, det_range, t_delay=0, h_discr=0, mode2=False, debug_hits=False) :
     """
     Finds interception points for shoot-look-shoot mode. First, runs short_search, then takes missile time at the first interception point
     and runs short_search again passing missile time instead of t_int_lnc. Returns both interception data points to check if this works.
@@ -497,10 +498,10 @@ def sls_search(trj, int_table, h_int_min, t_int_lnc, fi_opt, dist_opt, op_range,
     """
 
 
-    hit_1 = short_search(trj, int_table, h_int_min, t_int_lnc, fi_opt, dist_opt, op_range, det_range, t_delay, h_discr, mode2, debug_hits)
+    hit_1 = short_search(trj, int_table, h_int_min, maxia, t_int_lnc, fi_opt, dist_opt, op_range, det_range, t_delay, h_discr, mode2, debug_hits)
     if hit_1 :
         t_int_lnc = hit_1[1][0]
-        hit_2 = short_search(trj, int_table, h_int_min, t_int_lnc, fi_opt, dist_opt, op_range, det_range, t_delay, h_discr, mode2, debug_hits, True)
+        hit_2 = short_search(trj, int_table, h_int_min, maxia, t_int_lnc, fi_opt, dist_opt, op_range, det_range, t_delay, h_discr, mode2, debug_hits, True)
         if hit_2 :
             sls_hit = hit_2
         else :
@@ -511,16 +512,15 @@ def sls_search(trj, int_table, h_int_min, t_int_lnc, fi_opt, dist_opt, op_range,
     return sls_hit
 
 
-def sls_search2(trj, int_table, h_int_min, t_int_lnc, omega, shift, op_range, det_range, t_delay=0, h_discr=0, debug_hits=False) :
-    return sls_search(trj, int_table, h_int_min, t_int_lnc, omega, shift, op_range, det_range, t_delay, h_discr, True, debug_hits)  
+def sls_search2(trj, int_table, h_int_min, maxia, t_int_lnc, omega, shift, op_range, det_range, t_delay=0, h_discr=0, debug_hits=False) :
+    return sls_search(trj, int_table, h_int_min, maxia, t_int_lnc, omega, shift, op_range, det_range, t_delay, h_discr, True, debug_hits)  
 
-
-import footprintv2 as fp
                     
 def angle_dist_tab2(s_func,
                     t_trj,
                     t_itable,
-                    h_min,
+                    h_min, 
+                    maxia,
                     t_lnc,
                     op_range,
                     det_range,
@@ -594,7 +594,7 @@ def angle_dist_tab2(s_func,
             #print("\rProcessing distance {:.0f} km, angle={:5.1f} grad   ".format(f_dist/1000, f_ang), end='')
             f_ang_r = radians(f_ang)
             #print("\rProcessing distance {:.0f} km, angle={:.1f} grad   ".format(f_dist/1000, f_ang), end='')
-            hit_ss = s_func(t_trj, t_itable, h_min, t_lnc, f_ang_r, f_dist, op_range, det_range, t_delay, h_discr)
+            hit_ss = s_func(t_trj, t_itable, h_min, maxia, t_lnc, f_ang_r, f_dist, op_range, det_range, t_delay, h_discr)
 
             if not hit_ss :
                 pass
@@ -656,7 +656,8 @@ def angle_dist_tab2(s_func,
 def probing2(s_func,
                 t_trj,
                 t_itable,
-                h_min,
+                h_min, 
+                maxia,
                 t_lnc,
                 op_range,
                 det_range,
@@ -683,14 +684,14 @@ def probing2(s_func,
 
     f_alfa = t_trj[len(t_trj) - 1, 2]
     mrange = f_alfa * R_e
-    ilp_ok = s_func(t_trj, t_itable, h_min, t_lnc, 0, mrange, op_range, det_range, t_delay, h_discr)
+    ilp_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, mrange, op_range, det_range, t_delay, h_discr)
     if ilp_ok :
         #print("Ok")
         f_dist = min( int_max_range / 8 + mrange, dist_limit )
     #search for the furthest footprint point along the ILP-MLP
 #beg        
         f_dist0 = mrange
-        f_ok = s_func(t_trj, t_itable, h_min, t_lnc, 0, f_dist, op_range, det_range, t_delay, h_discr)
+        f_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, f_dist, op_range, det_range, t_delay, h_discr)
         
         while f_ok :             
             f_y_keep = f_ok
@@ -699,13 +700,13 @@ def probing2(s_func,
                 break
             f_dist = f_dist * 2 - mrange
             f_dist = min(f_dist, dist_limit) #int_max_range + mrange)
-            f_ok = s_func(t_trj, t_itable, h_min, t_lnc, 0, f_dist, op_range, det_range, t_delay, h_discr)
+            f_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, f_dist, op_range, det_range, t_delay, h_discr)
         do_search = not f_ok
         f_a = f_dist0
         f_b = f_dist
         while do_search :
             f_x = f_a + (f_b - f_a) / 2
-            f_xy = s_func(t_trj, t_itable, h_min, t_lnc, 0, f_x, op_range, det_range, t_delay, h_discr)
+            f_xy = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, f_x, op_range, det_range, t_delay, h_discr)
             if f_xy :
                 f_a = f_x
                 f_y_keep = f_xy
@@ -758,7 +759,7 @@ def probing2(s_func,
         while f_ang <= t_ang_end :
             f_ang_r = radians(f_ang)
             #print("\rProcessing distance {:.0f} km, angle={:5.1f} grad   ".format(f_dist/1000, f_ang), end='')
-            hit_ss = s_func(t_trj, t_itable, h_min, t_lnc, f_ang_r, f_dist, op_range, det_range, t_delay, h_discr) # mode2==True
+            hit_ss = s_func(t_trj, t_itable, h_min, maxia, t_lnc, f_ang_r, f_dist, op_range, det_range, t_delay, h_discr) # mode2==True
                 
             if not hit_ss :
                 #if abs(f_ang) <= angle_eps :
@@ -894,7 +895,8 @@ def omegashift_2_xy(omega, shift, mrange):
 def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_search2
                 t_trj,
                 t_itable,
-                h_min,
+                h_min, 
+                maxia,
                 t_lnc,
                 angle_step,
                 op_range,
@@ -926,7 +928,7 @@ def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_sea
     fp_single = False   # assuming it is a two-part footprint unless proven otherwise
     dist_step = (shift_min - mrange) / num_dist # negative value
     
-    ilp_ok = s_func(t_trj, t_itable, h_min, t_lnc, 0, mrange, op_range, det_range, t_delay, h_discr) # shift == mrange means ILP is the impact point
+    ilp_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, mrange, op_range, det_range, t_delay, h_discr) # shift == mrange means ILP is the impact point
     if not ilp_ok : # ILP not defendable, find a defendable position behind it
         print("Interceptor position undefendable. Attempting to find a footprint behind(?) it...")
         #shift_beg = mrange
@@ -944,7 +946,7 @@ def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_sea
                 print("\rProcessing distance {:6.0f} km...   ".format((f_shift - mrange)/1000), end='')
                 stm2 = enm2
 
-            f_ok = s_func(t_trj, t_itable, h_min, t_lnc, 0, f_shift, op_range, det_range, t_delay, h_discr)
+            f_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, f_shift, op_range, det_range, t_delay, h_discr)
             if f_ok :
                 f_b = f_shift
                 f_a = f_shift - dist_step
@@ -966,7 +968,7 @@ def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_sea
     #search for an undefendable point in front of the ILP
     #beg        
         f_shift0 = mrange
-        f_ok = s_func(t_trj, t_itable, h_min, t_lnc, 0, f_shift, op_range, det_range, t_delay, h_discr)
+        f_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, f_shift, op_range, det_range, t_delay, h_discr)
         
         while f_ok :             
             f_shift0 = f_shift
@@ -974,7 +976,7 @@ def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_sea
                 break
             f_shift = f_shift * 2 - mrange
             f_shift = min(f_shift, int_max_range + mrange)
-            f_ok = s_func(t_trj, t_itable, h_min, t_lnc, 0, f_shift, op_range, det_range, t_delay, h_discr)
+            f_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, f_shift, op_range, det_range, t_delay, h_discr)
 
         if True : #not f_ok :
             f_b = f_shift0
@@ -988,7 +990,7 @@ def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_sea
     #print("\nForward border between f_a = {:.2f} f_b = {:.2f}".format((f_a - mrange)/1000,(f_b - mrange)/1000))
     while True :
         f_x = f_a + (f_b - f_a) / 2
-        f_xy = s_func(t_trj, t_itable, h_min, t_lnc, 0, f_x, op_range, det_range, t_delay, h_discr)
+        f_xy = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, f_x, op_range, det_range, t_delay, h_discr)
         if f_xy :
             f_b = f_x
             f_y_keep = f_xy
@@ -1028,7 +1030,7 @@ def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_sea
             print("\rProcessing distance {:6.0f} km...   ".format((f_shift - mrange)/1000), end='')
             stm2 = enm2
 
-        f_ok = s_func(t_trj, t_itable, h_min, t_lnc, 0, f_shift, op_range, det_range, t_delay, h_discr)
+        f_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, f_shift, op_range, det_range, t_delay, h_discr)
         #print(True if f_ok else False, f_shift)
         if not f_ok :
             f_b = f_shift
@@ -1056,7 +1058,7 @@ def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_sea
         #print(f_ok, f_shift)
         while True :
             f_x = f_a + (f_b - f_a) / 2
-            f_xy = s_func(t_trj, t_itable, h_min, t_lnc, 0, f_x, op_range, det_range, t_delay, h_discr)
+            f_xy = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, f_x, op_range, det_range, t_delay, h_discr)
             if f_xy :
                 f_a = f_x
                 f_y_keep = f_xy
@@ -1090,7 +1092,7 @@ def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_sea
                 print("\rProcessing distance {:6.0f} km...   ".format((f_shift - mrange)/1000), end='')
                 stm2 = enm2
 
-            f_ok = s_func(t_trj, t_itable, h_min, t_lnc, 0, f_shift, op_range, det_range, t_delay, h_discr)
+            f_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, f_shift, op_range, det_range, t_delay, h_discr)
             #print("f_shift={:.3f} f_ok={}".format(f_shift, f_ok))
             if f_ok :
                 f_b = f_shift
@@ -1107,7 +1109,7 @@ def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_sea
         else :
             while True :
                 f_x = f_a + (f_b - f_a) / 2
-                f_xy = s_func(t_trj, t_itable, h_min, t_lnc, 0, f_x, op_range, det_range, t_delay, h_discr)
+                f_xy = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, f_x, op_range, det_range, t_delay, h_discr)
                 if f_xy :
                     f_b = f_x
                     f_y_keep = f_xy
@@ -1130,7 +1132,7 @@ def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_sea
             shift_beg = f_b
             shift_end = shift_min # smallest shift, corresponds to footprint's max distance behind the ILP
                         
-            f_ok = s_func(t_trj, t_itable, h_min, t_lnc, 0, shift_end, op_range, det_range, t_delay, h_discr)        
+            f_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, shift_end, op_range, det_range, t_delay, h_discr)        
             if f_ok :
                 print("\nBack edge of the footprint's second part is at the maximum missile range")
                 fp_back2 = shift_end
@@ -1139,7 +1141,7 @@ def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_sea
                 f_b = shift_end
                 while True :
                     f_x = f_a + (f_b - f_a) / 2
-                    f_xy = s_func(t_trj, t_itable, h_min, t_lnc, 0, f_x, op_range, det_range, t_delay, h_discr)
+                    f_xy = s_func(t_trj, t_itable, h_min, maxia, t_lnc, 0, f_x, op_range, det_range, t_delay, h_discr)
                     if f_xy :
                         f_a = f_x
                         f_y_keep = f_xy
@@ -1462,7 +1464,7 @@ def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_sea
                 print("\rProcessing distance {:6.0f} km...   ".format((f_shift - mrange)/1000), end='')
                 stm2 = enm2
                 
-            f_ok = s_func(t_trj, t_itable, h_min, t_lnc, f_x, f_shift, op_range, det_range, t_delay, h_discr)
+            f_ok = s_func(t_trj, t_itable, h_min, maxia, t_lnc, f_x, f_shift, op_range, det_range, t_delay, h_discr)
             #x, y = omegashift_2_xy(f_x, f_shift, mrange)
             #print("\rf_x = {:.2f} degr f_shift = {:.2f} km x = {:.2f} km y = {:.2f} km".format(degrees(f_x), (f_shift)/1000, x, y))
             if f_ok :
@@ -1485,7 +1487,7 @@ def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_sea
 
                 while True : #do_search :
                     f_x = f_a + (f_b - f_a) / 2
-                    f_xy = s_func(t_trj, t_itable, h_min, t_lnc, f_x, f_shift, op_range, det_range, t_delay, h_discr)
+                    f_xy = s_func(t_trj, t_itable, h_min, maxia, t_lnc, f_x, f_shift, op_range, det_range, t_delay, h_discr)
                     #f_x_d = degrees(f_x) # for debugging
                     if f_xy :
                         f_a = f_x
@@ -1552,7 +1554,7 @@ def footprint_mode2(s_func, # s_func needs to be either short_search2 or sls_sea
 
                 while True : #do_search :
                     f_x = f_a + (f_b - f_a) / 2
-                    f_xy = s_func(t_trj, t_itable, h_min, t_lnc, f_x, f_shift, op_range, det_range, t_delay, h_discr)
+                    f_xy = s_func(t_trj, t_itable, h_min, maxia, t_lnc, f_x, f_shift, op_range, det_range, t_delay, h_discr)
                     if f_xy :
                         f_a = f_x
                     else :

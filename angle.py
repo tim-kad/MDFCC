@@ -104,7 +104,7 @@ def calculate_angles(country, target_coords, max_distance=''):
     
 
     # Print the result
-    print(f"Target location at Lat={targetlat} / Lon={targetlon}")
+    print(f"Target location at Lat={target_coords[1]} / Lon={target_coords[0]}")
     print(f"Maximum viewing angle to view {country}: {max_angle}°")
     print(f"Minimum viewing angle to view {country}: {min_angle}°")
 
