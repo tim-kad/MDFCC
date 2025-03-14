@@ -13,3 +13,5 @@ The following two are recommended, but not required (the program will work norma
 
   - **tktooltips**
   - **playsound**
+
+Porper manual is coming!
